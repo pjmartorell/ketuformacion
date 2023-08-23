@@ -127,11 +127,6 @@ const Canvas = () => {
         );
     };
 
-    const handleMusiciansSelect = (selectedIds) => {
-        const selected = musicians.filter(musician => selectedIds.includes(musician.id));
-        setSelectedMusicians(selected);
-    };
-
     const handleOptionSelected = (e, option) => {
         console.log(option);
         if (option === 'delete_player') {
@@ -239,10 +234,6 @@ const Canvas = () => {
         updateLines(updatedItems);
     };
 
-    const handleItemClick = (itemId) => {
-        setDraggedItemId(itemId);
-    };
-
     const handleStageClick = (e) => {
         if (!draggedItemId) {
             return;
@@ -273,11 +264,6 @@ const Canvas = () => {
             return { ...line, points: [...startCoords, ...endCoords] };
         });
 
-        setLines(updatedLines);
-    };
-
-    const git = (lineId) => {
-        const updatedLines = lines.filter((line) => line.id !== lineId);
         setLines(updatedLines);
     };
 
