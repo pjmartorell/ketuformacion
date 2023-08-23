@@ -7,6 +7,7 @@ import logo from './logo.svg';
 import Portal from "./Portal";
 import ContextMenu from "./ContextMenu";
 import "./Canvas.css";
+import HamburgerMenu from './HamburgerMenu';
 
 const Canvas = () => {
     const [items, setItems] = useState([]);
@@ -267,9 +268,17 @@ const Canvas = () => {
         setLines(updatedLines);
     };
 
+    const handleMenuItemClick = (menuItem) => {
+        console.log('Menu item clicked: ', menuItem);
+        if (menuItem === 'percusionistas') {
+            setShowAddDialog(true);
+        }
+        // Handle other menu items here
+    };
+
     return (
         <div>
-            <button onClick={handleAddCanvasItemClick}>Percusionistas</button>
+            <HamburgerMenu onMenuItemClick={handleMenuItemClick} />
             {showAddDialog && (
                 <AddCanvasItemDialog
                     musicians={musicians} // Pass your list of musicians here
