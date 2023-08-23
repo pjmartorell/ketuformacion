@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {Stage, Layer} from 'react-konva';
+import Konva from 'konva';
 import CanvasItem from './CanvasItem';
 import CanvasLine from './CanvasLine';
 import logo from './logo.svg';
+import Portal from "./Portal";
+import ContextMenu from "./ContextMenu";
 
 const Canvas = () => {
     const [items, setItems] = useState([]);
@@ -13,6 +16,70 @@ const Canvas = () => {
 
     const circleWidth = 80; // Set the width of the circle, radius * 2
     const spacing = 20; // Set the desired spacing between circles
+
+
+    const stageRef = useRef(null);
+    const [contextMenuVisible, setContextMenuVisible] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    const [currentShape, setCurrentShape] = useState(null);
+
+    const handleOptionSelected = (e, option) => {
+        console.log(option);
+        if (option === 'delete_player') {
+            console.log('Deleting player with ID: ', currentShape);
+            const updatedItems = items.filter((item) => item.id !== currentShape);
+            setItems(updatedItems);
+
+            const updatedLines = lines.filter(
+                (line) => line.startItemId !== currentShape && line.endItemId !== currentShape
+            );
+            setLines(updatedLines);
+        }
+        else if (option === 'change_instrument') {
+            console.log('Changing instrument...');
+            if (currentShape) {
+
+            }
+        }
+        setContextMenuVisible(false);
+    };
+
+    const handleContextMenu = (e, itemId) => {
+        e.evt.preventDefault();
+        const mousePosition = e.target.getStage().getPointerPosition();
+
+        setCurrentShape(itemId);
+        setContextMenuPosition({ x: mousePosition.x, y: mousePosition.y });
+        setContextMenuVisible(true);
+    };
+
+    const handleDragStart = (e) => {
+        console.log('Dragging started...')
+
+        e.target.setAttrs({
+            shadowOffset: {
+                x: 15,
+                y: 15
+            },
+            scaleX: 1.1,
+            scaleY: 1.1
+        });
+    };
+
+    const handleDragEnd = (e) => {
+        console.log('Dragging ended...')
+
+        e.target.to({
+            duration: 0.5,
+            easing: Konva.Easings.ElasticEaseOut,
+            scaleX: 1,
+            scaleY: 1,
+            shadowOffsetX: 5,
+            shadowOffsetY: 5
+        });
+    };
+
+
 
     const addCanvasItem = () => {
         console.log('Adding a canvas item...');
@@ -29,6 +96,7 @@ const Canvas = () => {
         }
 
         setItems((prevItems) => [...prevItems, newItem]);
+        addLineConnection(newItem.id);
     };
 
     const handleLineAdd = (startId, endId) => {
@@ -102,7 +170,7 @@ const Canvas = () => {
     return (
         <div>
             <button onClick={addCanvasItem}>Add Canvas Item</button>
-            <Stage width={window.innerWidth} height={window.innerHeight} onClick={handleStageClick}>
+            <Stage width={window.innerWidth} height={window.innerHeight} onClick={handleStageClick} ref={stageRef}>
                 <Layer>
                     {lines.map((line) => (
                         <CanvasLine
@@ -113,16 +181,28 @@ const Canvas = () => {
                     ))}
 
                     {items.map((item) => (
-                            <CanvasItem
-                                key={item.id}
-                                x={item.x}
-                                y={item.y}
-                                imageUrl={avatarImage}
-                                onDragMove={(e) => handleDragMove(item.id, e.target.x(), e.target.y())}
-                                onClick={() => addLineConnection(item.id)}
-                            />
+                        <CanvasItem
+                            key={item.id}
+                            x={item.x}
+                            y={item.y}
+                            imageUrl={avatarImage}
+                            onDragMove={(e) => handleDragMove(item.id, e.target.x(), e.target.y())}
+                            onDragStart={(e) => handleDragStart(e)}
+                            onDragEnd={(e) => handleDragEnd(e)}
+                            onContextMenu={(e) => handleContextMenu(e, item.id)}
+
+                        />
+
                     ))}
                 </Layer>
+                {contextMenuVisible && (
+                    <Portal>
+                        <ContextMenu
+                            position={contextMenuPosition}
+                            onOptionSelected={handleOptionSelected}
+                        />
+                    </Portal>
+                )}
             </Stage>
         </div>
     );

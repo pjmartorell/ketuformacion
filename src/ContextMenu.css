@@ -1,0 +1,23 @@
+.menu ul,
+.menu li {
+    padding: 0;
+    margin: 0;
+}
+
+.menu li {
+    background-color: white;
+    border: none;
+    margin: 0;
+    padding: 10px;
+    list-style-type: none;
+}
+
+.menu li:hover {
+    background-color: lightgray;
+}
+
+.menu {
+    background-color: white;
+    box-shadow: 0 0 5px grey;
+    border-radius: 3px;
+}
