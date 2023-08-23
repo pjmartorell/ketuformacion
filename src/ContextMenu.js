@@ -14,8 +14,8 @@ const ContextMenu = ({ position, onOptionSelected }) => {
             }}
         >
             <ul>
-                <li onClick={handleOptionSelected("delete_player")}>Eliminar</li>
                 <li onClick={handleOptionSelected("change_instrument")}>Cambiar instrumento</li>
+                <li onClick={handleOptionSelected("delete_player")}>Eliminar</li>
             </ul>
         </div>
     );

@@ -8,6 +8,7 @@ import Portal from "./Portal";
 import ContextMenu from "./ContextMenu";
 import "./Canvas.css";
 import HamburgerMenu from './HamburgerMenu';
+import InstrumentDialog from './InstrumentDialog';
 
 const Canvas = () => {
     const [items, setItems] = useState([]);
@@ -46,6 +47,18 @@ const Canvas = () => {
     ]);
     const [selectedMusicians, setSelectedMusicians] = useState([]);
     const [showAddDialog, setShowAddDialog] = useState(false);
+
+    const [instruments, setInstruments] = useState([
+        { id: 1, name: 'R' },
+        { id: 2, name: 'F1' },
+        { id: 3, name: 'C' },
+        { id: 4, name: 'D1' },
+        { id: 5, name: 'D2' },
+        { id: 6, name: 'F2' },
+        { id: 7, name: 'M' },
+    ]);
+    const [selectedInstrument, setSelectedInstrument] = useState(null);
+    const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
 
     // This effect will run only once after the component is mounted
     const initializeComponent = () => {
@@ -148,9 +161,9 @@ const Canvas = () => {
         }
         else if (option === 'change_instrument') {
             console.log('Changing instrument...');
-            if (currentShape) {
-
-            }
+            setSelectedInstrument(null); // Clear previous selection
+            setContextMenuVisible(false);
+            setShowInstrumentDialog(true); // Show the instrument selection dialog
         }
         setContextMenuVisible(false);
     };
@@ -276,6 +289,25 @@ const Canvas = () => {
         // Handle other menu items here
     };
 
+    const handleInstrumentDialogClose = () => {
+        setShowInstrumentDialog(false);
+    };
+
+    const handleInstrumentSelect = (selected) => {
+        setSelectedInstrument(selected);
+        if (selected) {
+            const updatedItems = items.map((item) => {
+                if (item.id === currentShape) {
+                    console.log('Updated musician: ', { ...item, instrument: selected })
+                    return { ...item, instrument: selected };
+                }
+                return item;
+            });
+            setItems(updatedItems);
+        }
+        setShowInstrumentDialog(false);
+    };
+
     return (
         <div>
             <HamburgerMenu onMenuItemClick={handleMenuItemClick} />
@@ -284,6 +316,13 @@ const Canvas = () => {
                     musicians={musicians} // Pass your list of musicians here
                     onCancel={() => setShowAddDialog(false)}
                     onConfirm={handleAddMusiciansToCanvas}
+                />
+            )}
+            {showInstrumentDialog && (
+                <InstrumentDialog
+                    instruments={instruments}
+                    onClose={handleInstrumentDialogClose}
+                    onSelect={handleInstrumentSelect}
                 />
             )}
             <Stage width={window.innerWidth} height={window.innerHeight} onClick={handleStageClick} ref={stageRef}>
