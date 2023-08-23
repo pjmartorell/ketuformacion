@@ -222,11 +222,11 @@ const Canvas = () => {
         console.log('Line added between: ', startId, endId);
     };
 
-    // Use useEffect to log the updated lines array
-    useEffect(() => {
-        console.log('Lines after state update: ', lines);
-        console.log('Items after state update: ', items);
-    }, [lines, items]);
+    // Use useEffect to log the updated lines and items array
+    // useEffect(() => {
+    //     console.log('Lines after state update: ', lines);
+    //     console.log('Items after state update: ', items);
+    // }, [lines, items]);
 
     const addLineConnection = (endId) => {
         console.log('Adding a line connection...')
