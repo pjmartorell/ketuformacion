@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaBars } from 'react-icons/fa';
 import './HamburgerMenu.css';
 
-const HamburgerMenu = ({ onMenuItemClick }) => {
+const HamburgerMenu = ({ onMenuItemClick, onExportCanvas }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const handleToggleMenu = () => {
@@ -37,6 +37,9 @@ const HamburgerMenu = ({ onMenuItemClick }) => {
                         }}
                     >
                         Percusionistas
+                    </div>
+                    <div className="menu-item" onClick={onExportCanvas}>
+                        Export Canvas
                     </div>
                     {/* Add more menu items here */}
                 </div>

@@ -298,9 +298,21 @@ const Canvas = () => {
         setShowInstrumentDialog(false);
     };
 
+    const downloadDataURL = (dataURL, filename) => {
+        const anchor = document.createElement('a');
+        anchor.href = dataURL;
+        anchor.download = filename;
+        anchor.click();
+    };
+    const handleExportCanvas = () => {
+        const stage = stageRef.current;
+        const dataURL = stage.toDataURL({ pixelRatio: 3 });
+        downloadDataURL(dataURL, 'canvas.png');
+    };
+
     return (
         <div>
-            <HamburgerMenu onMenuItemClick={handleMenuItemClick} />
+            <HamburgerMenu onMenuItemClick={handleMenuItemClick} onExportCanvas={handleExportCanvas} />
             {showAddDialog && (
                 <AddCanvasItemDialog
                     musicians={musicians} // Pass your list of musicians here
