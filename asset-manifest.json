@@ -1,0 +1,32 @@
+{
+  "files": {
+    "main.css": "/ketuformacion/static/css/main.ce482bc4.css",
+    "main.js": "/ketuformacion/static/js/main.15797511.js",
+    "static/js/787.c484aab1.chunk.js": "/ketuformacion/static/js/787.c484aab1.chunk.js",
+    "static/media/snez.jpeg": "/ketuformacion/static/media/snez.747b6ac5d71a1bf0ea42.jpeg",
+    "static/media/moni.jpeg": "/ketuformacion/static/media/moni.7d940722736365918de4.jpeg",
+    "static/media/wally.jpeg": "/ketuformacion/static/media/wally.2058f2e4e891009fa372.jpeg",
+    "static/media/lucia.jpeg": "/ketuformacion/static/media/lucia.b3be2c55de961b472f98.jpeg",
+    "static/media/aitor.jpeg": "/ketuformacion/static/media/aitor.de530ab64746456c652d.jpeg",
+    "static/media/elena.jpeg": "/ketuformacion/static/media/elena.9457ef985f18c261879e.jpeg",
+    "static/media/alex.jpeg": "/ketuformacion/static/media/alex.be225a9f362124f06856.jpeg",
+    "static/media/carla.jpeg": "/ketuformacion/static/media/carla.a6a55be849ceac1afe1f.jpeg",
+    "static/media/maria.jpeg": "/ketuformacion/static/media/maria.de0174cbdb721924ac8e.jpeg",
+    "static/media/default_avatar.png": "/ketuformacion/static/media/default_avatar.7e67f4a11da6ea1d4b46.png",
+    "static/media/pere.jpeg": "/ketuformacion/static/media/pere.a3b585cdae15a35524b1.jpeg",
+    "static/media/sara.jpg": "/ketuformacion/static/media/sara.9b82ddb3f5fe2e2e90c4.jpg",
+    "static/media/maya.jpeg": "/ketuformacion/static/media/maya.df5caf22b8d73a094822.jpeg",
+    "static/media/manu.jpeg": "/ketuformacion/static/media/manu.c0a7c649fd274c390e99.jpeg",
+    "static/media/leti.jpg": "/ketuformacion/static/media/leti.0117178467783429b681.jpg",
+    "static/media/lara.jpeg": "/ketuformacion/static/media/lara.f0f4860158d19876ae00.jpeg",
+    "static/media/adeline.jpeg": "/ketuformacion/static/media/adeline.d56abb6c486d5bed2ee0.jpeg",
+    "index.html": "/ketuformacion/index.html",
+    "main.ce482bc4.css.map": "/ketuformacion/static/css/main.ce482bc4.css.map",
+    "main.15797511.js.map": "/ketuformacion/static/js/main.15797511.js.map",
+    "787.c484aab1.chunk.js.map": "/ketuformacion/static/js/787.c484aab1.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ce482bc4.css",
+    "static/js/main.15797511.js"
+  ]
+}
