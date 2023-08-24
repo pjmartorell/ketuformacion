@@ -91,8 +91,9 @@ const Canvas = () => {
         setShowAddDialog(false);
     };
 
-    // AddCanvasItemDialog.js
     const AddCanvasItemDialog = ({ musicians, onCancel, onConfirm }) => {
+        const [selectedMusicians, setSelectedMusicians] = useState([]);
+
         const handleToggleMusician = (musician) => {
             if (selectedMusicians.includes(musician)) {
                 setSelectedMusicians((prevSelected) =>
@@ -101,6 +102,10 @@ const Canvas = () => {
             } else {
                 setSelectedMusicians((prevSelected) => [...prevSelected, musician]);
             }
+        };
+
+        const handleSelectAll = () => {
+            setSelectedMusicians(musicians);
         };
 
         const handleConfirm = () => {
@@ -112,6 +117,7 @@ const Canvas = () => {
             <div className="select-musicians-dialog-overlay">
                 <div className="select-musicians-dialog">
                     <h2>Percusionistas</h2>
+                    <button onClick={handleSelectAll}>Seleccionar todos</button>
                     <div className="select-musicians-dialog-content">
                         {musicians.map((musician) => (
                             <div key={musician.id}>
