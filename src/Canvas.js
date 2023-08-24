@@ -11,18 +11,19 @@ import HamburgerMenu from './HamburgerMenu';
 import InstrumentDialog from './InstrumentDialog';
 
 const Canvas = () => {
-    const [items, setItems] = useState([]);
+    const [avatarImage] = useState(logo);
+    const master = { id: 1, name: 'Alex', avatar: avatarImage, instrument: 'R', x: 100, y: 100 }
+
+    const [items, setItems] = useState([master]);
     const [lines, setLines] = useState([]);
     const [draggedItemId, setDraggedItemId] = useState(null);
-    const [firstItemId, setFirstItemId] = useState(null);
-    const [avatarImage] = useState(logo);
+    const [firstItemId, setFirstItemId] = useState(master.id);
 
     const stageRef = useRef(null);
     const [contextMenuVisible, setContextMenuVisible] = useState(false);
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
     const [currentShape, setCurrentShape] = useState(null);
 
-    const master = { id: 1, name: 'Alex', avatar: avatarImage, instrument: 'R', x: 100, y: 100 }
     const [musicians, setMusicians] = useState([
         { id: 2, name: 'Leti', avatar: avatarImage, instrument: 'F1' },
         { id: 3, name: 'Joanna', avatar: avatarImage, instrument: 'C' },
@@ -60,18 +61,6 @@ const Canvas = () => {
     const [selectedInstrument, setSelectedInstrument] = useState(null);
     const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
 
-    // This effect will run only once after the component is mounted
-    const initializeComponent = () => {
-        console.log('CanvasItem initialized...');
-        addCanvasItem(master);
-        setFirstItemId(master.id);
-    };
-
-    // Call the custom initialization function once when the component mounts
-    useEffect(() => {
-        initializeComponent();
-    }, []); // Empty dependency array ensures the effect runs only once
-
     const handleAddCanvasItemClick = () => {
         setShowAddDialog(true);
     };
@@ -79,23 +68,24 @@ const Canvas = () => {
     const handleAddMusiciansToCanvas = (selectedMusicians) => {
         console.log('Handle selected musicians: ', selectedMusicians);
 
-        // Add the selected musicians to the canvas
-        // const newItems = selectedMusicians.map((musician) => ({
-        //     id: musician.id,
-        //     x: 100,
-        //     y: 100,
-        // }));
+        // This can probably be simplified, but it works for now
+        const selectedMusicianIds = selectedMusicians.map((musician) => musician.id);
+        const itemsIds = items.map((item) => item.id);
+        const intersection = selectedMusicianIds.filter(value => itemsIds.includes(value));
+        const complementary = [...selectedMusicianIds.filter(value => !itemsIds.includes(value)), ...itemsIds.filter(value => !selectedMusicianIds.includes(value))];
+        const existingMusicians = items.filter((item) => intersection.includes(item.id));
+        const newMusicians = selectedMusicians.filter((item) => complementary.includes(item.id));
+        const existingMaster = items.find((musician) => musician.id === master.id);
 
-        // setItems((prevItems) => [...prevItems, ...newItems]);
-        setItems([master, ...selectedMusicians]);
+        // Concatenate existing master, intersection and complementary arrays
+        const newItems = [existingMaster,...existingMusicians, ...newMusicians];
 
-        // Add line connections for each selected musician
-        selectedMusicians.forEach((musician) => {
+        setItems(newItems);
+
+        // Add line connections for each new musician added to the canvas only
+        newMusicians.forEach((musician) => {
             addLineConnection(musician.id);
         });
-        // newItems.forEach((musician) => {
-        //     addCanvasItem(musician);
-        // });
 
         // Close the dialog
         setShowAddDialog(false);
@@ -337,6 +327,7 @@ const Canvas = () => {
                     ))}
 
                     {/* Render selected musicians' CanvasItems */}
+                    {/* If the musician has no x or y, we set it to 100 so the item is drawn to the default position */}
                     {items.map((item) => (
                         <CanvasItem
                             key={item.id}
