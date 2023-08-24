@@ -1,20 +1,20 @@
 import React from 'react';
 import './InstrumentDialog.css';
+
 const InstrumentDialog = ({ isOpen, instruments, onClose, onSelect }) => {
     return (
-
         <div className={`instrument-dialog-overlay ${isOpen ? 'open' : ''}`}>
             <div className="instrument-dialog">
                 <h2>Instrumento</h2>
                 <select onChange={(e) => onSelect(e.target.value)}>
-                    <option value="">Selecciona un instrumento...</option>
+                    <option value="">Seleccionar instrumento...</option>
                     {instruments.map((instrument) => (
                         <option key={instrument.id} value={instrument.name}>
                             {instrument.name}
                         </option>
                     ))}
                 </select>
-                <button id={'close-dialog'} onClick={onClose}>Cancelar</button>
+                <button id="close-dialog" onClick={onClose}>Cancelar</button>
             </div>
         </div>
     );
