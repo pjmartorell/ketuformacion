@@ -6,17 +6,19 @@ const CanvasItem = ({ x, y, musician_name, musician_instrument, imageUrl, onDrag
     const [image] = useImage(imageUrl);
     const circleRadius = 40;
     const circleWidth = circleRadius * 2;
-    const imageWidth = 110;
+    const imageWidth = 80;
     const imageHeight = 80;
 
     return (
         <Group x={x} y={y} draggable onDragMove={onDragMove} onDragStart={onDragStart} onDragEnd={onDragEnd} onContextMenu={onContextMenu}>
             <Circle
                 radius={circleRadius}
-                fill="red"
+                fill="white"
                 shadowColor="black"
                 shadowBlur={10}
                 shadowOpacity={0.6}
+                // stroke="blue"      // Add a yellow stroke/border
+                // strokeWidth={8} // Set the border width
             />
             <Group
                 clipFunc={(ctx) => {
