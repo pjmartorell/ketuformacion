@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {Layer, Stage} from 'react-konva';
 import Konva from 'konva';
 import CanvasItem from './CanvasItem';
@@ -309,6 +309,27 @@ const Canvas = () => {
         const dataURL = stage.toDataURL({ pixelRatio: 3 });
         downloadDataURL(dataURL, 'canvas.png');
     };
+
+    // Hides the ContextMenu when clicking outside of it
+    useEffect(() => {
+        const handleStageClick = () => {
+            if (contextMenuVisible) {
+                setContextMenuVisible(false);
+            }
+        };
+
+        // Check if the ref is available before adding/removing event listener
+        if (stageRef.current) {
+            stageRef.current.addEventListener("click", handleStageClick);
+        }
+
+        // Clean up event listener when component unmounts
+        return () => {
+            if (stageRef.current) {
+                stageRef.current.removeEventListener("click", handleStageClick);
+            }
+        };
+    }, [contextMenuVisible]);
 
     return (
         <div>
