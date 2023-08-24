@@ -3,17 +3,15 @@ import {Layer, Stage} from 'react-konva';
 import Konva from 'konva';
 import CanvasItem from './CanvasItem';
 import CanvasLine from './CanvasLine';
-import logo from './logo.svg';
 import Portal from "./Portal";
 import ContextMenu from "./ContextMenu";
 import "./Canvas.css";
 import HamburgerMenu from './HamburgerMenu';
 import InstrumentDialog from './InstrumentDialog';
+import { findAvatarByName } from './utils/avatarUtils';
 
 const Canvas = () => {
-    const [avatarImage] = useState(logo);
-    const master = { id: 1, name: 'Alex', avatar: avatarImage, instrument: 'R', x: 100, y: 100 }
-
+    const master = { id: 1, name: 'Alex', instrument: 'R', x: 100, y: 100 }
     const [items, setItems] = useState([master]);
     const [lines, setLines] = useState([]);
     const [draggedItemId, setDraggedItemId] = useState(null);
@@ -25,26 +23,26 @@ const Canvas = () => {
     const [currentShape, setCurrentShape] = useState(null);
 
     const [musicians, setMusicians] = useState([
-        { id: 2, name: 'Leti', avatar: avatarImage, instrument: 'F1' },
-        { id: 3, name: 'Joanna', avatar: avatarImage, instrument: 'C' },
-        { id: 4, name: 'Aitor', avatar: avatarImage, instrument: 'C' },
-        { id: 5, name: 'Manu', avatar: avatarImage, instrument: 'C' },
-        { id: 6, name: 'Leo', avatar: avatarImage, instrument: 'C' },
-        { id: 7, name: 'Snez', avatar: avatarImage, instrument: 'C' },
-        { id: 8, name: 'Pere', avatar: avatarImage, instrument: 'C' },
-        { id: 9, name: 'Wally', avatar: avatarImage, instrument: 'C' },
-        { id: 10, name: 'Adeline', avatar: avatarImage, instrument: 'D1' },
-        { id: 11, name: 'Maria', avatar: avatarImage, instrument: 'D1' },
-        { id: 12, name: 'Emiliana', avatar: avatarImage, instrument: 'D1' },
-        { id: 13, name: 'Nicole', avatar: avatarImage, instrument: 'D1' },
-        { id: 14, name: 'Maya', avatar: avatarImage, instrument: 'D1' },
-        { id: 15, name: 'Elena', avatar: avatarImage, instrument: 'D2' },
-        { id: 16, name: 'Sara', avatar: avatarImage, instrument: 'D2' },
-        { id: 17, name: 'Lucia', avatar: avatarImage, instrument: 'D2' },
-        { id: 18, name: 'Tania', avatar: avatarImage, instrument: 'F2' },
-        { id: 19, name: 'Lara', avatar: avatarImage, instrument: 'F2' },
-        { id: 20, name: 'Sab', avatar: avatarImage, instrument: 'M' },
-        { id: 21, name: 'Moni', avatar: avatarImage, instrument: 'M' },
+        { id: 2, name: 'Leti', instrument: 'F1' },
+        { id: 3, name: 'Joanna', instrument: 'C' },
+        { id: 4, name: 'Aitor', instrument: 'C' },
+        { id: 5, name: 'Manu', instrument: 'C' },
+        { id: 6, name: 'Leo', instrument: 'C' },
+        { id: 7, name: 'Snez', instrument: 'C' },
+        { id: 8, name: 'Pere', instrument: 'C' },
+        { id: 9, name: 'Wally', instrument: 'C' },
+        { id: 10, name: 'Adeline', instrument: 'D1' },
+        { id: 11, name: 'Maria', instrument: 'D1' },
+        { id: 12, name: 'Emiliana', instrument: 'D1' },
+        { id: 13, name: 'Nicole', instrument: 'D1' },
+        { id: 14, name: 'Maya', instrument: 'D1' },
+        { id: 15, name: 'Elena', instrument: 'D2' },
+        { id: 16, name: 'Sara', instrument: 'D2' },
+        { id: 17, name: 'Lucia', instrument: 'D2' },
+        { id: 18, name: 'Tania', instrument: 'F2' },
+        { id: 19, name: 'Lara', instrument: 'F2' },
+        { id: 20, name: 'Sab', instrument: 'M' },
+        { id: 21, name: 'Moni', instrument: 'M' },
     ]);
     const [selectedMusicians, setSelectedMusicians] = useState([]);
     const [showAddDialog, setShowAddDialog] = useState(false);
@@ -347,7 +345,7 @@ const Canvas = () => {
                             y={item.y || 100}
                             musician_name={item.name}
                             musician_instrument={item.instrument}
-                            imageUrl={item.avatar}
+                            imageUrl={findAvatarByName(item.name.toLowerCase())}
                             onDragMove={(e) => handleDragMove(item.id, e.target.x(), e.target.y())}
                             onDragStart={(e) => handleDragStart(e)}
                             onDragEnd={(e) => handleDragEnd(e)}
