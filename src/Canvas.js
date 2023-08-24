@@ -59,6 +59,8 @@ const Canvas = () => {
     const [selectedInstrument, setSelectedInstrument] = useState(null);
     const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
 
+    const [showLines, setShowLines] = useState(true); // State to control line visibility
+
     const handleAddCanvasItemClick = () => {
         setShowAddDialog(true);
     };
@@ -333,9 +335,21 @@ const Canvas = () => {
         };
     }, [contextMenuVisible]);
 
+    const handleToggleLines = () => {
+        setShowLines(!showLines);
+    };
+
     return (
         <div>
             <HamburgerMenu onMenuItemClick={handleMenuItemClick} onExportCanvas={handleExportCanvas} />
+            <label>
+                <input
+                    type="checkbox"
+                    checked={showLines}
+                    onChange={handleToggleLines}
+                />
+                Mostrar líneas
+            </label>
             {showAddDialog && (
                 <AddCanvasItemDialog
                     musicians={musicians} // Pass your list of musicians here
@@ -353,7 +367,7 @@ const Canvas = () => {
             <Stage width={window.innerWidth} height={window.innerHeight} onClick={handleStageClick} ref={stageRef}>
                 <Layer>
                     {/* Render CanvasLines... */}
-                    {lines.map((line) => (
+                    {showLines && lines.map((line) => (
                         <CanvasLine
                             key={line.id}
                             startItem={items.find((item) => item.id === line.startItemId)}
