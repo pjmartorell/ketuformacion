@@ -130,7 +130,6 @@ const Canvas = () => {
     };
 
     const handleOptionSelected = (e, option) => {
-        console.log(option);
         if (option === 'delete_player') {
             console.log('Deleting player with ID: ', currentShape);
             const updatedItems = items.filter((item) => item.id !== currentShape);
@@ -152,6 +151,9 @@ const Canvas = () => {
             setSelectedInstrument(null); // Clear previous selection
             setContextMenuVisible(false);
             setShowInstrumentDialog(true); // Show the instrument selection dialog
+        }
+        else {
+            console.log('Option selected: ', option);
         }
         setContextMenuVisible(false);
     };
@@ -359,6 +361,7 @@ const Canvas = () => {
                         <ContextMenu
                             position={contextMenuPosition}
                             onOptionSelected={handleOptionSelected}
+                            deleteDisabled={currentShape === firstItemId}
                         />
                     </Portal>
                 )}

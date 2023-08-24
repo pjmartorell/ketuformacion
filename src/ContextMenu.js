@@ -1,7 +1,7 @@
 import React from "react";
 import "./ContextMenu.css";
 
-const ContextMenu = ({ position, onOptionSelected }) => {
+const ContextMenu = ({ position, onOptionSelected, deleteDisabled }) => {
     const handleOptionSelected = option => (e) => onOptionSelected(e, option);
 
     return (
@@ -15,7 +15,9 @@ const ContextMenu = ({ position, onOptionSelected }) => {
         >
             <ul>
                 <li onClick={handleOptionSelected("change_instrument")}>Cambiar instrumento</li>
-                <li onClick={handleOptionSelected("delete_player")}>Eliminar</li>
+                {!deleteDisabled && (
+                    <li onClick={handleOptionSelected("delete_player")}>Eliminar</li>
+                )}
             </ul>
         </div>
     );
