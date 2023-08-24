@@ -39,7 +39,7 @@ const HamburgerMenu = ({ onMenuItemClick, onExportCanvas }) => {
                         Percusionistas
                     </div>
                     <div className="menu-item" onClick={onExportCanvas}>
-                        Export Canvas
+                        Exportar imagen
                     </div>
                     {/* Add more menu items here */}
                 </div>
