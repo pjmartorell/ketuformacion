@@ -1,10 +1,14 @@
 import React from 'react';
 import Canvas from './Canvas';
+import InitialOverlayDialog from './InitialOverlayDialog';
 
 function App() {
-  return (
+    const hasHiddenInitialDialog = localStorage.getItem('hideInitialDialog') === 'true';
+
+    return (
       <div className="App">
-        <Canvas />
+          {!hasHiddenInitialDialog && <InitialOverlayDialog />}
+          <Canvas />
       </div>
   );
 }
