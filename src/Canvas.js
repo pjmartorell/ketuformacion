@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {Group, Layer, Stage, Text} from 'react-konva';
+import React, { useState, useRef } from 'react';
+import {Layer, Stage} from 'react-konva';
 import Konva from 'konva';
 import CanvasItem from './CanvasItem';
 import CanvasLine from './CanvasLine';
