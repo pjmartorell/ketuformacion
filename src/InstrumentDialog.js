@@ -14,7 +14,7 @@ const InstrumentDialog = ({ isOpen, instruments, onClose, onSelect }) => {
                         </option>
                     ))}
                 </select>
-                <button onClick={onClose}>Cancelar</button>
+                <button id={'close-dialog'} onClick={onClose}>Cancelar</button>
             </div>
         </div>
     );

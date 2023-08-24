@@ -110,20 +110,22 @@ const Canvas = () => {
             <div className="select-musicians-dialog-overlay">
                 <div className="select-musicians-dialog">
                     <h2>Percusionistas</h2>
-                    {musicians.map((musician) => (
-                        <div key={musician.id}>
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedMusicians.includes(musician)}
-                                    onChange={() => handleToggleMusician(musician)}
-                                />
-                                {musician.name}
-                            </label>
-                        </div>
-                    ))}
-                    <button onClick={onCancel}>Cancelar</button>
+                    <div className="select-musicians-dialog-content">
+                        {musicians.map((musician) => (
+                            <div key={musician.id}>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedMusicians.includes(musician)}
+                                        onChange={() => handleToggleMusician(musician)}
+                                    />
+                                    {musician.name}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
                     <button onClick={handleConfirm}>Confirmar</button>
+                    <button id={'close-select-dialog'} onClick={onCancel}>Cancelar</button>
                 </div>
             </div>
         );
