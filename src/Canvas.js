@@ -355,6 +355,7 @@ const Canvas = () => {
         const stage = stageRef.current;
         const pixelRatio = 3;
         const originalCanvasElement = stage.toCanvas({ pixelRatio: pixelRatio });
+        const margin = 50; // Margin to add to the canvas size
 
         // 1. Calculate bounds of content
         // Skip the Canvas and its Layer when calculating bounds
@@ -371,7 +372,7 @@ const Canvas = () => {
         // 3. Draw content onto the new canvas
         context.drawImage(
             originalCanvasElement, // Reference to the original canvas element
-            contentBounds.minX, contentBounds.minY,
+            contentBounds.minX + margin, contentBounds.minY + margin,
             canvas.width*pixelRatio, canvas.height*pixelRatio,
             0, 0,
             canvas.width*pixelRatio, canvas.height*pixelRatio
