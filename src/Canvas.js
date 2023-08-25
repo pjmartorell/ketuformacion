@@ -318,18 +318,21 @@ const Canvas = () => {
         let maxY = -Infinity;
 
         const traverseChildren = (currentNode) => {
-            const nodePos = currentNode.getAbsolutePosition();
-            const nodeSize = currentNode.getSize();
+            // Skip lines when calculating bounds
+            if (!(currentNode instanceof Konva.Line)) {
+                const nodePos = currentNode.getAbsolutePosition();
+                const nodeSize = currentNode.getSize();
 
-            // Update min and max coordinates
-            minX = Math.min(minX, nodePos.x);
-            minY = Math.min(minY, nodePos.y);
-            maxX = Math.max(maxX, nodePos.x + nodeSize.width);
-            maxY = Math.max(maxY, nodePos.y + nodeSize.height);
+                // Update min and max coordinates
+                minX = Math.min(minX, nodePos.x);
+                minY = Math.min(minY, nodePos.y);
+                maxX = Math.max(maxX, nodePos.x + nodeSize.width);
+                maxY = Math.max(maxY, nodePos.y + nodeSize.height);
 
-            // console.log('Node: ', currentNode)
-            // console.log('Node pos: ', nodePos)
-            // console.log('Node size: ', nodeSize)
+                // console.log('Node: ', currentNode)
+                // console.log('Node pos: ', nodePos)
+                // console.log('Node size: ', nodeSize)
+            }
 
             if (currentNode.getChildren) {
                 currentNode.getChildren().forEach((childNode) => {
@@ -355,12 +358,14 @@ const Canvas = () => {
         const stage = stageRef.current;
         const pixelRatio = 3;
         const originalCanvasElement = stage.toCanvas({ pixelRatio: pixelRatio });
-        const margin = 50; // Margin to add to the canvas size
+        const margin = 10; // Margin to add to the canvas size
 
         // 1. Calculate bounds of content
         // Skip the Canvas and its Layer when calculating bounds
         const rootNode = stage.getChildren()[0]
         const contentBounds = calculateContentBoundsRecursive(rootNode);
+
+        // console.log('Content bounds: ', contentBounds)
 
         // 2. Adjust canvas size
         const canvas = document.createElement('canvas');
@@ -372,8 +377,8 @@ const Canvas = () => {
         // 3. Draw content onto the new canvas
         context.drawImage(
             originalCanvasElement, // Reference to the original canvas element
-            contentBounds.minX + margin, contentBounds.minY + margin,
-            canvas.width*pixelRatio, canvas.height*pixelRatio,
+            (contentBounds.minX - margin) * pixelRatio, (contentBounds.minY - margin) * pixelRatio,
+            (canvas.width + margin) * pixelRatio, (canvas.height + margin) * pixelRatio,
             0, 0,
             canvas.width*pixelRatio, canvas.height*pixelRatio
         );
