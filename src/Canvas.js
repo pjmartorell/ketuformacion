@@ -311,6 +311,40 @@ const Canvas = () => {
         setShowInstrumentDialog(false);
     };
 
+    const calculateContentBoundsRecursive = (node) => {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        const traverseChildren = (currentNode) => {
+            const nodePos = currentNode.getAbsolutePosition();
+            const nodeSize = currentNode.getSize();
+
+            // Update min and max coordinates
+            minX = Math.min(minX, nodePos.x);
+            minY = Math.min(minY, nodePos.y);
+            maxX = Math.max(maxX, nodePos.x + nodeSize.width);
+            maxY = Math.max(maxY, nodePos.y + nodeSize.height);
+
+            // console.log('Node: ', currentNode)
+            // console.log('Node pos: ', nodePos)
+            // console.log('Node size: ', nodeSize)
+
+            if (currentNode.getChildren) {
+                currentNode.getChildren().forEach((childNode) => {
+                    traverseChildren(childNode);
+                });
+            }
+        };
+
+        node.getChildren().forEach((childNode) => {
+            traverseChildren(childNode);
+        });
+
+        return { minX, minY, maxX, maxY };
+    };
+
     const downloadDataURL = (dataURL, filename) => {
         const anchor = document.createElement('a');
         anchor.href = dataURL;
@@ -319,7 +353,32 @@ const Canvas = () => {
     };
     const handleExportCanvas = () => {
         const stage = stageRef.current;
-        const dataURL = stage.toDataURL({ pixelRatio: 3 });
+        const pixelRatio = 3;
+        const originalCanvasElement = stage.toCanvas({ pixelRatio: pixelRatio });
+
+        // 1. Calculate bounds of content
+        // Skip the Canvas and its Layer when calculating bounds
+        const rootNode = stage.getChildren()[0]
+        const contentBounds = calculateContentBoundsRecursive(rootNode);
+
+        // 2. Adjust canvas size
+        const canvas = document.createElement('canvas');
+        canvas.width = contentBounds.maxX*pixelRatio - contentBounds.minX*pixelRatio;
+        canvas.height = contentBounds.maxY*pixelRatio - contentBounds.minY*pixelRatio;
+
+        const context = canvas.getContext('2d');
+
+        // 3. Draw content onto the new canvas
+        context.drawImage(
+            originalCanvasElement, // Reference to the original canvas element
+            contentBounds.minX, contentBounds.minY,
+            canvas.width*pixelRatio, canvas.height*pixelRatio,
+            0, 0,
+            canvas.width*pixelRatio, canvas.height*pixelRatio
+        );
+
+        // 4. Export the canvas as an image
+        const dataURL = canvas.toDataURL({ pixelRatio: pixelRatio });
         downloadDataURL(dataURL, 'canvas.png');
     };
 
