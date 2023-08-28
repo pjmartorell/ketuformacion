@@ -402,6 +402,29 @@ const Canvas = () => {
         downloadDataURL(dataURL, 'canvas.png');
     };
 
+    // Draws a bounding rectangle around all shapes on the stage
+    const drawBoundingRectangle = (layer, contentBounds) => {
+        const rectX = contentBounds.minX;
+        const rectY = contentBounds.minY;
+        const rectWidth = contentBounds.maxX - contentBounds.minX;
+        const rectHeight = contentBounds.maxY - contentBounds.minY;
+
+        // Create a Konva Rect shape for the bounding rectangle
+        const rect = new Konva.Rect({
+            x: rectX,
+            y: rectY,
+            width: rectWidth,
+            height: rectHeight,
+            stroke: 'red',
+            strokeWidth: 4,
+        });
+
+        // Add the rectangle shape to the layer
+        layer.add(rect);
+        layer.batchDraw();
+        return rect;
+    }
+
     // Hides the ContextMenu when clicking outside of it
     useEffect(() => {
         const handleStageClick = () => {
