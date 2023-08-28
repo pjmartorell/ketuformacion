@@ -450,6 +450,48 @@ const Canvas = () => {
         setShowLines(!showLines);
     };
 
+    // Add event listener to the stage to handle zooming
+    useEffect(() => {
+        const stage = stageRef.current.getStage();
+
+        const handleWheel = (e) => {
+            e.evt.preventDefault();
+
+            const oldScale = stage.scaleX();
+            const pointer = stage.getPointerPosition();
+
+            const mousePointTo = {
+                x: (pointer.x - stage.x()) / oldScale,
+                y: (pointer.y - stage.y()) / oldScale,
+            };
+
+            let direction = e.evt.deltaY > 0 ? 1 : -1;
+
+            if (e.evt.ctrlKey) {
+                direction = -direction;
+            }
+
+            // Calculate the new scale limiting it to a range of 0.3 to 2.6
+            const newScale = Math.max(0.3, Math.min(2.6, oldScale * (direction > 0 ? 1.1 : 1 / 1.1)));
+
+            stage.scale({ x: newScale, y: newScale });
+
+            const newPos = {
+                x: pointer.x - mousePointTo.x * newScale,
+                y: pointer.y - mousePointTo.y * newScale,
+            };
+            stage.position(newPos);
+
+            stage.batchDraw();
+        };
+
+        stage.on('wheel', handleWheel);
+
+        return () => {
+            stage.off('wheel', handleWheel);
+        };
+    }, []);
+
     return (
         <div>
             <HamburgerMenu onMenuItemClick={handleMenuItemClick} onExportCanvas={handleExportCanvas} />
