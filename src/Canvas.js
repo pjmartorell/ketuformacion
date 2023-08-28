@@ -9,7 +9,7 @@ import "./Canvas.css";
 import HamburgerMenu from './HamburgerMenu';
 import InstrumentDialog from './InstrumentDialog';
 import { findAvatarByName } from './utils/avatarUtils';
-
+import Background from './Background';
 const Canvas = () => {
     const master = { id: 1, name: 'Alex', instrument: 'R', x: 100, y: 100 }
     const [items, setItems] = useState([master]);
@@ -377,7 +377,8 @@ const Canvas = () => {
         stage.batchDraw();
 
         // Re-fetch the layer after changing the scale and re-calculate content bounds
-        let layer = stage.getChildren((node) => node.getClassName() === 'Layer')[0];
+        // Layer 0 is the background layer, so we skip it
+        let layer = stage.getChildren((node) => node.getClassName() === 'Layer')[1];
         let contentBounds = calculateContentBoundsRecursive(layer);
 
         // Set the stage position to the top left corner of the content bounds so we ensure all shapes are inside the
@@ -392,7 +393,7 @@ const Canvas = () => {
 
         // Re-fetch the layer after changing the stage position and re-calculate content bounds. Probably content bounds
         // can be calculated without re-fetching the layer nor re-calculating the bounds, but this works for now
-        layer = stage.getChildren((node) => node.getClassName() === 'Layer')[0];
+        layer = stage.getChildren((node) => node.getClassName() === 'Layer')[1];
         contentBounds = calculateContentBoundsRecursive(layer);
 
         const pixelRatio = 3; // Increase pixel ratio to improve image quality
@@ -565,6 +566,7 @@ const Canvas = () => {
 
             {/*Set stage width and height so it fits the viewport size when zooming out to 0.3 scale*/}
             <Stage width={window.innerWidth/0.3} height={window.innerHeight/0.3} onClick={handleStageClick} ref={stageRef} draggable>
+                <Background width={window.innerWidth/0.3} height={window.innerHeight/0.3} color="white" />
                 <Layer>
                     {/* Render CanvasLines... */}
                     {showLines && lines.map((line) => (
