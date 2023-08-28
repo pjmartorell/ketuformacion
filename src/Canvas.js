@@ -359,10 +359,12 @@ const Canvas = () => {
     };
 
     const downloadDataURL = (dataURL, filename) => {
-        const anchor = document.createElement('a');
-        anchor.href = dataURL;
-        anchor.download = filename;
-        anchor.click();
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
     const handleExportCanvas = () => {
         const stage = stageRef.current;
