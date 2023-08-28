@@ -589,6 +589,7 @@ const Canvas = () => {
                             onDragStart={(e) => handleDragStart(e)}
                             onDragEnd={(e) => handleDragEnd(e)}
                             onDblClick={(e) => handleContextMenu(e, item.id)}
+                            onDblTap={(e) => handleContextMenu(e, item.id)}
                         />
                     ))}
                 </Layer>

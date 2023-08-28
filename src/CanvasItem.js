@@ -2,7 +2,7 @@ import {Circle, Group, Image, Rect, Text} from 'react-konva';
 import useImage from 'use-image';
 import React from "react";
 
-const CanvasItem = ({ x, y, musician_name, musician_instrument, imageUrl, onDragStart, onDragEnd, onDragMove, onDblClick }) => {
+const CanvasItem = ({ x, y, musician_name, musician_instrument, imageUrl, onDragStart, onDragEnd, onDragMove, onDblClick, onDblTap }) => {
     const [image] = useImage(imageUrl);
     const circleRadius = 40;
     const circleWidth = circleRadius * 2;
@@ -15,7 +15,7 @@ const CanvasItem = ({ x, y, musician_name, musician_instrument, imageUrl, onDrag
     const textHeight = fontSize;
 
     return (
-        <Group x={x} y={y} draggable onDragMove={onDragMove} onDragStart={onDragStart} onDragEnd={onDragEnd} onDblClick={onDblClick}>
+        <Group x={x} y={y} draggable onDragMove={onDragMove} onDragStart={onDragStart} onDragEnd={onDragEnd} onDblClick={onDblClick} onDblTap={onDblTap}>
             <Circle
                 radius={circleRadius}
                 fill="white"
