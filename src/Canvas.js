@@ -369,37 +369,75 @@ const Canvas = () => {
 
     // Handles exporting the canvas as an image removing empty space, that is, calculating the bounding box of all shapes
     const handleExportCanvas = () => {
-        const stage = stageRef.current;
-        const pixelRatio = 3;
-        const originalCanvasElement = stage.toCanvas({ pixelRatio: pixelRatio });
+        const stage = stageRef.current.getStage();
+        const originalScale = stage.scaleX();
+
+        // Temporarily set the scale to the default 1 for exporting
+        stage.scale({ x: 1, y: 1 });
+        stage.batchDraw();
+
+        // Re-fetch the layer after changing the scale and re-calculate content bounds
+        let layer = stage.getChildren((node) => node.getClassName() === 'Layer')[0];
+        let contentBounds = calculateContentBoundsRecursive(layer);
+
+        // Set the stage position to the top left corner of the content bounds so we ensure all shapes are inside the
+        // limits of the stage and are not cropped
+        const originalStagePosition = stage.position();
+        const newPos = {
+            x: contentBounds.minX,
+            y: contentBounds.minY,
+        };
+        stage.position(newPos);
+        stage.batchDraw();
+
+        // Re-fetch the layer after changing the stage position and re-calculate content bounds. Probably content bounds
+        // can be calculated without re-fetching the layer nor re-calculating the bounds, but this works for now
+        layer = stage.getChildren((node) => node.getClassName() === 'Layer')[0];
+        contentBounds = calculateContentBoundsRecursive(layer);
+
+        const pixelRatio = 3; // Increase pixel ratio to improve image quality
         const margin = 10; // Margin to add to the canvas size
 
-        // 1. Calculate bounds of content
-        // Skip the Canvas and its Layer when calculating bounds
-        const rootNode = stage.getChildren()[0]
-        const contentBounds = calculateContentBoundsRecursive(rootNode);
-
-        // console.log('Content bounds: ', contentBounds)
-
-        // 2. Adjust canvas size
+        // Create a canvas element with the calculated size, corresponding to the content bounds
         const canvas = document.createElement('canvas');
-        canvas.width = contentBounds.maxX*pixelRatio - contentBounds.minX*pixelRatio;
-        canvas.height = contentBounds.maxY*pixelRatio - contentBounds.minY*pixelRatio;
-
+        canvas.width = (contentBounds.maxX - contentBounds.minX  + 2 * margin) * pixelRatio;
+        canvas.height = (contentBounds.maxY - contentBounds.minY  + 2 * margin) * pixelRatio;
         const context = canvas.getContext('2d');
 
-        // 3. Draw content onto the new canvas
+        const source_xy = [(contentBounds.minX - margin) * pixelRatio, (contentBounds.minY - margin) * pixelRatio]
+        const source_wh =  [(canvas.width + 2 * margin) * pixelRatio, (canvas.height + 2 * margin) * pixelRatio]
+        const dest_xy = [0, 0]
+        const dest_wh = [(canvas.width + 2 * margin) * pixelRatio, (canvas.height  + 2 * margin) * pixelRatio]
+
+        // const rect = drawBoundingRectangle(stage, layer, contentBounds);
+
+        const originalCanvasElement = stage.toCanvas({ pixelRatio: pixelRatio }); // Reference to the original canvas element
+
+        // Remove the rectangle shape from the layer
+        // rect.remove();
+        // layer.batchDraw();
+
         context.drawImage(
-            originalCanvasElement, // Reference to the original canvas element
-            (contentBounds.minX - margin) * pixelRatio, (contentBounds.minY - margin) * pixelRatio,
-            (canvas.width + margin) * pixelRatio, (canvas.height + margin) * pixelRatio,
-            0, 0,
-            canvas.width*pixelRatio, canvas.height*pixelRatio
+            originalCanvasElement,
+            ...source_xy,
+            ...source_wh,
+            ...dest_xy,
+            ...dest_wh
         );
 
-        // 4. Export the canvas as an image
-        const dataURL = canvas.toDataURL({ pixelRatio: pixelRatio });
+        // Export the content of the canvas as an image
+        const dataURL = canvas.toDataURL();
+
+        // Restore the original stage position
+        stage.position(originalStagePosition);
+
+        // Restore the original scale
+        stage.scale({ x: originalScale, y: originalScale });
+        stage.batchDraw();
+
         downloadDataURL(dataURL, 'canvas.png');
+
+        // console.log('Stage position: ', stage.position())
     };
 
     // Draws a bounding rectangle around all shapes on the stage
