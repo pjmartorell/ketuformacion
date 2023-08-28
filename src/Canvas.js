@@ -322,12 +322,21 @@ const Canvas = () => {
             if (!(currentNode instanceof Konva.Line)) {
                 const nodePos = currentNode.getAbsolutePosition();
                 const nodeSize = currentNode.getSize();
+                let nodePosX = nodePos.x;
+                let nodePosY = nodePos.y;
+
+                // Rectangle-like shapes has origin at TOP LEFT (Rectangle, Sprite, Text, Image, etc), but Circles have
+                // their position at the center, so we need to adjust the coordinates
+                if (currentNode instanceof Konva.Circle) {
+                    nodePosX -= nodeSize.width / 2;
+                    nodePosY -= nodeSize.height / 2;
+                }
 
                 // Update min and max coordinates
-                minX = Math.min(minX, nodePos.x);
-                minY = Math.min(minY, nodePos.y);
-                maxX = Math.max(maxX, nodePos.x + nodeSize.width);
-                maxY = Math.max(maxY, nodePos.y + nodeSize.height);
+                minX = Math.min(minX, nodePosX);
+                minY = Math.min(minY, nodePosY);
+                maxX = Math.max(maxX, nodePosX + nodeSize.width);
+                maxY = Math.max(maxY, nodePosY + nodeSize.height);
 
                 // console.log('Node: ', currentNode)
                 // console.log('Node pos: ', nodePos)
@@ -345,48 +354,121 @@ const Canvas = () => {
             traverseChildren(childNode);
         });
 
+        console.log('Content bounds: ', { minX, minY, maxX, maxY })
         return { minX, minY, maxX, maxY };
     };
 
     const downloadDataURL = (dataURL, filename) => {
-        const anchor = document.createElement('a');
-        anchor.href = dataURL;
-        anchor.download = filename;
-        anchor.click();
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
+
+    // Handles exporting the canvas as an image removing empty space, that is, calculating the bounding box of all shapes
     const handleExportCanvas = () => {
-        const stage = stageRef.current;
-        const pixelRatio = 3;
-        const originalCanvasElement = stage.toCanvas({ pixelRatio: pixelRatio });
+        const stage = stageRef.current.getStage();
+        const originalScale = stage.scaleX();
+
+        // Temporarily set the scale to the default 1 for exporting
+        stage.scale({ x: 1, y: 1 });
+        stage.batchDraw();
+
+        // Re-fetch the layer after changing the scale and re-calculate content bounds
+        let layer = stage.getChildren((node) => node.getClassName() === 'Layer')[0];
+        let contentBounds = calculateContentBoundsRecursive(layer);
+
+        // Set the stage position to the top left corner of the content bounds so we ensure all shapes are inside the
+        // limits of the stage and are not cropped
+        const originalStagePosition = stage.position();
+        const newPos = {
+            x: contentBounds.minX,
+            y: contentBounds.minY,
+        };
+        stage.position(newPos);
+        stage.batchDraw();
+
+        // Re-fetch the layer after changing the stage position and re-calculate content bounds. Probably content bounds
+        // can be calculated without re-fetching the layer nor re-calculating the bounds, but this works for now
+        layer = stage.getChildren((node) => node.getClassName() === 'Layer')[0];
+        contentBounds = calculateContentBoundsRecursive(layer);
+
+        const pixelRatio = 3; // Increase pixel ratio to improve image quality
         const margin = 10; // Margin to add to the canvas size
 
-        // 1. Calculate bounds of content
-        // Skip the Canvas and its Layer when calculating bounds
-        const rootNode = stage.getChildren()[0]
-        const contentBounds = calculateContentBoundsRecursive(rootNode);
-
-        // console.log('Content bounds: ', contentBounds)
-
-        // 2. Adjust canvas size
+        // Create a canvas element with the calculated size, corresponding to the content bounds
         const canvas = document.createElement('canvas');
-        canvas.width = contentBounds.maxX*pixelRatio - contentBounds.minX*pixelRatio;
-        canvas.height = contentBounds.maxY*pixelRatio - contentBounds.minY*pixelRatio;
-
+        canvas.width = (contentBounds.maxX - contentBounds.minX  + 2 * margin) * pixelRatio;
+        canvas.height = (contentBounds.maxY - contentBounds.minY  + 2 * margin) * pixelRatio;
         const context = canvas.getContext('2d');
 
-        // 3. Draw content onto the new canvas
+        const source_xy = [(contentBounds.minX - margin) * pixelRatio, (contentBounds.minY - margin) * pixelRatio]
+        const source_wh =  [(canvas.width + 2 * margin) * pixelRatio, (canvas.height + 2 * margin) * pixelRatio]
+        const dest_xy = [0, 0]
+        const dest_wh = [(canvas.width + 2 * margin) * pixelRatio, (canvas.height  + 2 * margin) * pixelRatio]
+
+        // const rect = drawBoundingRectangle(stage, layer, contentBounds);
+
+        const originalCanvasElement = stage.toCanvas({ pixelRatio: pixelRatio }); // Reference to the original canvas element
+
+        // Remove the rectangle shape from the layer
+        // rect.remove();
+        // layer.batchDraw();
+
         context.drawImage(
-            originalCanvasElement, // Reference to the original canvas element
-            (contentBounds.minX - margin) * pixelRatio, (contentBounds.minY - margin) * pixelRatio,
-            (canvas.width + margin) * pixelRatio, (canvas.height + margin) * pixelRatio,
-            0, 0,
-            canvas.width*pixelRatio, canvas.height*pixelRatio
+            originalCanvasElement,
+            ...source_xy,
+            ...source_wh,
+            ...dest_xy,
+            ...dest_wh
         );
 
-        // 4. Export the canvas as an image
-        const dataURL = canvas.toDataURL({ pixelRatio: pixelRatio });
+        // Export the content of the canvas as an image
+        const dataURL = canvas.toDataURL();
+
+        // Restore the original stage position
+        stage.position(originalStagePosition);
+
+        // Restore the original scale
+        stage.scale({ x: originalScale, y: originalScale });
+        stage.batchDraw();
+
         downloadDataURL(dataURL, 'canvas.png');
+
+        // console.log('Stage position: ', stage.position())
     };
+
+    // Draws a bounding rectangle around all shapes on the stage
+    const drawBoundingRectangle = (stage, layer, contentBounds) => {
+        // Adjust the content bounds to account for the stage position after dragging
+        contentBounds = {
+            minX: contentBounds.minX - stage.position().x,
+            minY: contentBounds.minY - stage.position().y,
+            maxX: contentBounds.maxX - stage.position().x,
+            maxY: contentBounds.maxY - stage.position().y,
+        }
+        const rectX = contentBounds.minX;
+        const rectY = contentBounds.minY;
+        const rectWidth = contentBounds.maxX - contentBounds.minX;
+        const rectHeight = contentBounds.maxY - contentBounds.minY;
+
+        // Create a Konva Rect shape for the bounding rectangle
+        const rect = new Konva.Rect({
+            x: rectX,
+            y: rectY,
+            width: rectWidth,
+            height: rectHeight,
+            stroke: 'red',
+            strokeWidth: 4,
+        });
+
+        // Add the rectangle shape to the layer
+        layer.add(rect);
+        layer.batchDraw();
+        return rect;
+    }
 
     // Hides the ContextMenu when clicking outside of it
     useEffect(() => {
@@ -413,6 +495,48 @@ const Canvas = () => {
         setShowLines(!showLines);
     };
 
+    // Add event listener to the stage to handle zooming
+    useEffect(() => {
+        const stage = stageRef.current.getStage();
+
+        const handleWheel = (e) => {
+            e.evt.preventDefault();
+
+            const oldScale = stage.scaleX();
+            const pointer = stage.getPointerPosition();
+
+            const mousePointTo = {
+                x: (pointer.x - stage.x()) / oldScale,
+                y: (pointer.y - stage.y()) / oldScale,
+            };
+
+            let direction = e.evt.deltaY > 0 ? 1 : -1;
+
+            if (e.evt.ctrlKey) {
+                direction = -direction;
+            }
+
+            // Calculate the new scale limiting it to a range of 0.3 to 2.6
+            const newScale = Math.max(0.3, Math.min(2.6, oldScale * (direction > 0 ? 1.1 : 1 / 1.1)));
+
+            stage.scale({ x: newScale, y: newScale });
+
+            const newPos = {
+                x: pointer.x - mousePointTo.x * newScale,
+                y: pointer.y - mousePointTo.y * newScale,
+            };
+            stage.position(newPos);
+
+            stage.batchDraw();
+        };
+
+        stage.on('wheel', handleWheel);
+
+        return () => {
+            stage.off('wheel', handleWheel);
+        };
+    }, []);
+
     return (
         <div>
             <HamburgerMenu onMenuItemClick={handleMenuItemClick} onExportCanvas={handleExportCanvas} />
@@ -438,7 +562,9 @@ const Canvas = () => {
                     onSelect={handleInstrumentSelect}
                 />
             )}
-            <Stage width={window.innerWidth} height={window.innerHeight} onClick={handleStageClick} ref={stageRef} draggable>
+
+            {/*Set stage width and height so it fits the viewport size when zooming out to 0.3 scale*/}
+            <Stage width={window.innerWidth/0.3} height={window.innerHeight/0.3} onClick={handleStageClick} ref={stageRef} draggable>
                 <Layer>
                     {/* Render CanvasLines... */}
                     {showLines && lines.map((line) => (
