@@ -403,7 +403,14 @@ const Canvas = () => {
     };
 
     // Draws a bounding rectangle around all shapes on the stage
-    const drawBoundingRectangle = (layer, contentBounds) => {
+    const drawBoundingRectangle = (stage, layer, contentBounds) => {
+        // Adjust the content bounds to account for the stage position after dragging
+        contentBounds = {
+            minX: contentBounds.minX - stage.position().x,
+            minY: contentBounds.minY - stage.position().y,
+            maxX: contentBounds.maxX - stage.position().x,
+            maxY: contentBounds.maxY - stage.position().y,
+        }
         const rectX = contentBounds.minX;
         const rectY = contentBounds.minY;
         const rectWidth = contentBounds.maxX - contentBounds.minX;
