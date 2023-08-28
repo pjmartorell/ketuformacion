@@ -322,12 +322,21 @@ const Canvas = () => {
             if (!(currentNode instanceof Konva.Line)) {
                 const nodePos = currentNode.getAbsolutePosition();
                 const nodeSize = currentNode.getSize();
+                let nodePosX = nodePos.x;
+                let nodePosY = nodePos.y;
+
+                // Rectangle-like shapes has origin at TOP LEFT (Rectangle, Sprite, Text, Image, etc), but Circles have
+                // their position at the center, so we need to adjust the coordinates
+                if (currentNode instanceof Konva.Circle) {
+                    nodePosX -= nodeSize.width / 2;
+                    nodePosY -= nodeSize.height / 2;
+                }
 
                 // Update min and max coordinates
-                minX = Math.min(minX, nodePos.x);
-                minY = Math.min(minY, nodePos.y);
-                maxX = Math.max(maxX, nodePos.x + nodeSize.width);
-                maxY = Math.max(maxY, nodePos.y + nodeSize.height);
+                minX = Math.min(minX, nodePosX);
+                minY = Math.min(minY, nodePosY);
+                maxX = Math.max(maxX, nodePosX + nodeSize.width);
+                maxY = Math.max(maxY, nodePosY + nodeSize.height);
 
                 // console.log('Node: ', currentNode)
                 // console.log('Node pos: ', nodePos)
@@ -345,6 +354,7 @@ const Canvas = () => {
             traverseChildren(childNode);
         });
 
+        console.log('Content bounds: ', { minX, minY, maxX, maxY })
         return { minX, minY, maxX, maxY };
     };
 
