@@ -366,6 +366,8 @@ const Canvas = () => {
         link.click();
         document.body.removeChild(link);
     };
+
+    // Handles exporting the canvas as an image removing empty space, that is, calculating the bounding box of all shapes
     const handleExportCanvas = () => {
         const stage = stageRef.current;
         const pixelRatio = 3;
