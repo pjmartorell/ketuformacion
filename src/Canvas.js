@@ -10,6 +10,8 @@ import HamburgerMenu from './HamburgerMenu';
 import InstrumentDialog from './InstrumentDialog';
 import { findAvatarByName } from './utils/avatarUtils';
 import Background from './Background';
+import { FaSearchPlus, FaSearchMinus } from 'react-icons/fa';
+
 const Canvas = () => {
     const master = { id: 1, name: 'Alex', instrument: 'R', x: 100, y: 100 }
     const [items, setItems] = useState([master]);
@@ -538,17 +540,35 @@ const Canvas = () => {
         };
     }, []);
 
+    // Begin zooming in/out buttons
+    const [zoomScale, setZoomScale] = useState(1);
+
+    const handleZoomIn = () => {
+        const newScale = Math.min(zoomScale + 0.1, 2.6); // Limit maximum zoom in
+        setZoomScale(newScale);
+        stageRef.current.scale({ x: newScale, y: newScale });
+        stageRef.current.batchDraw();
+    };
+
+    const handleZoomOut = () => {
+        const newScale = Math.max(zoomScale - 0.1, 0.3); // Limit minimum zoom out
+        setZoomScale(newScale);
+        stageRef.current.scale({ x: newScale, y: newScale });
+        stageRef.current.batchDraw();
+    };
+    // End zooming in/out buttons
+
     return (
         <div>
-            <HamburgerMenu onMenuItemClick={handleMenuItemClick} onExportCanvas={handleExportCanvas} />
-            <label>
-                <input
-                    type="checkbox"
-                    checked={showLines}
-                    onChange={handleToggleLines}
-                />
-                Mostrar líneas
-            </label>
+            <div className="toolbar">
+                <HamburgerMenu onMenuItemClick={handleMenuItemClick} onExportCanvas={handleExportCanvas} />
+                <button className="zoom-button" onClick={handleZoomIn}><FaSearchPlus /></button>
+                <button className="zoom-button" onClick={handleZoomOut}><FaSearchMinus /></button>
+                <label className="lines-label">
+                    <input type="checkbox" checked={showLines} onChange={handleToggleLines} />
+                    Mostrar líneas
+                </label>
+            </div>
             {showAddDialog && (
                 <AddCanvasItemDialog
                     musicians={musicians} // Pass your list of musicians here

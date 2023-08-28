@@ -25,3 +25,28 @@
 #close-select-dialog {
     margin-left: 5px;
 }
+
+/* Begin zoom buttons */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+}
+
+.zoom-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+}
+
+.lines-label {
+    display: inline-block;
+    margin-left: 5px; /* Add some spacing after the buttons */
+    vertical-align: middle; /* Align checkbox with buttons */
+}
+
+/* End zoom buttons */
