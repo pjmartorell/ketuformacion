@@ -517,7 +517,9 @@ const Canvas = () => {
                     onSelect={handleInstrumentSelect}
                 />
             )}
-            <Stage width={window.innerWidth} height={window.innerHeight} onClick={handleStageClick} ref={stageRef} draggable>
+
+            {/*Set stage width and height so it fits the viewport size when zooming out to 0.3 scale*/}
+            <Stage width={window.innerWidth/0.3} height={window.innerHeight/0.3} onClick={handleStageClick} ref={stageRef} draggable>
                 <Layer>
                     {/* Render CanvasLines... */}
                     {showLines && lines.map((line) => (
