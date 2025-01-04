@@ -1,48 +1,35 @@
 {
   "name": "ketu-squads",
-  "homepage": "https://pjmartorell.github.io/ketuformacion",
+  "homepage": "https://pjmartorell.github.io/ketu-squads",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "konva": "^9.2.0",
+    "konva": "^9.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-icons": "^4.10.1",
+    "react-icons": "^4.12.0",
     "react-konva": "^18.2.10",
-    "react-scripts": "5.0.1",
-    "use-image": "^1.1.1",
-    "web-vitals": "^2.1.4"
+    "styled-components": "^6.1.1",
+    "use-image": "^1.1.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "deploy": "gh-pages -d dist",
+    "tsc": "tsc --noEmit",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "devDependencies": {
-    "gh-pages": "^6.0.0"
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@types/styled-components": "^5.1.34",
+    "@vitejs/plugin-react": "^4.2.1",
+    "gh-pages": "^6.1.0",
+    "typescript": "^5.3.3",
+    "vite": "^6.0.7"
   }
 }
