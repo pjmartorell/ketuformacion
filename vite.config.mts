@@ -7,7 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
-  base: '/ketu-squads/',
+  base: '/',
   server: {
     port: 3000,
     open: true
