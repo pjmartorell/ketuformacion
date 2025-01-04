@@ -188,7 +188,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
 
     const handleLineAdd = (startId: number, endId: number) => {
         const newLine = {
-            id: Date.now(),
+            id: `line_${startId}_${endId}_${Date.now()}`, // Make sure line IDs are unique
             startItemId: startId,
             endItemId: endId,
         };
@@ -219,7 +219,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
 
     const handleAddMusiciansToCanvas = (selectedMusicians: Musician[]) => {
         const selectedMusicianIds = selectedMusicians.map(m => m.id);
-        const itemsIds = items.map(item => item.id);
+        const itemsIds = items.map(item => item.musician.id);
 
         const intersection = selectedMusicianIds.filter(id => itemsIds.includes(id));
         const complementary = [
@@ -227,8 +227,15 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             ...itemsIds.filter(id => !selectedMusicianIds.includes(id))
         ];
 
-        const existingMusicians = items.filter(item => intersection.includes(item.id));
-        const newMusicians = selectedMusicians.filter(m => complementary.includes(m.id));
+        const existingMusicians = items.filter(item => intersection.includes(item.musician.id));
+        const newMusicians = selectedMusicians
+            .filter(m => complementary.includes(m.id))
+            .map(musician => ({
+                id: musician.id,
+                x: Math.random() * 400 + 100, // Random position between 100 and 500
+                y: Math.random() * 400 + 100, // Random position between 100 and 500
+                musician: musician
+            }));
 
         const existingMaster = items.find(m => m.id === firstItemId);
         const newItems = [
@@ -239,8 +246,8 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
 
         setItems(newItems);
 
-        newMusicians.forEach(musician => {
-            addLineConnection(musician.id);
+        newMusicians.forEach(item => {
+            addLineConnection(item.id);
         });
 
         setDialogs(prev => ({ ...prev, addMusician: false }));
@@ -302,14 +309,14 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                 <Layer>
                     {showLines && lines.map(line => (
                         <CanvasLine
-                            key={line.id}
+                            key={`line-${line.id}`} // Ensure unique key for lines
                             startItem={items.find(item => item.id === line.startItemId)}
                             endItem={items.find(item => item.id === line.endItemId)}
                         />
                     ))}
                     {items.map(item => (
                         <CanvasItem
-                            key={item.id}
+                            key={`item-${item.id}-${item.musician.id}`} // Ensure unique key for items
                             x={item.x || 100}
                             y={item.y || 100}
                             musician={item.musician}
