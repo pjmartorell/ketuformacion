@@ -2,18 +2,6 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 const ketuColors = {
-  yellow: {
-    50: '#FFF9E6',
-    100: '#FFF3CC',
-    200: '#FFE799',
-    300: '#FFDB66',
-    400: '#FFCF33',
-    500: '#FFC300', // Primary yellow
-    600: '#CC9C00',
-    700: '#997500',
-    800: '#664E00',
-    900: '#332700',
-  },
   blue: {
     50: '#E6F3FF',
     100: '#CCE7FF',
@@ -86,8 +74,8 @@ export const theme = {
     sm: '0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)',
     md: '0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.1)',
     lg: '0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.1)',
-    glow: `0 0 15px ${ketuColors.yellow[300]}`,
-    highlight: `0 0 0 2px ${ketuColors.yellow[300]}`,
+    glow: `0 0 15px ${ketuColors.blue[300]}`,
+    highlight: `0 0 0 2px ${ketuColors.blue[300]}`,
   },
   gradients: {
     primary: `linear-gradient(135deg, ${ketuColors.blue[400]} 0%, ${ketuColors.blue[600]} 100%)`,
