@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import styled from 'styled-components';
 import { Cross2Icon, PersonIcon } from '@radix-ui/react-icons';
@@ -195,11 +195,18 @@ interface Props {
     onClose: () => void;
     musicians: Musician[];
     onSelect: (musicians: Musician[]) => void;
+    currentMusicians: Musician[]; // Add this prop
 }
 
-export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, onSelect }) => {
+export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, onSelect, currentMusicians }) => {
     const { state, dispatch } = useMusician();
     const [selectedMusicians, setSelectedMusicians] = useState<Musician[]>([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedMusicians(currentMusicians);
+        }
+    }, [isOpen, currentMusicians]);
 
     const handleSelectMusician = (musician: Musician) => {
         setSelectedMusicians(prev => {

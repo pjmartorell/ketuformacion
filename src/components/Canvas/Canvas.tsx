@@ -429,6 +429,10 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         setDialogs(prev => ({ ...prev, addMusician: false }));
     };
 
+    const getCurrentMusiciansInCanvas = () => {
+        return items.map(item => item.musician);
+    };
+
     useEffect(() => {
         const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
             e.evt.preventDefault();
@@ -558,6 +562,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                 onClose={() => setDialogs(prev => ({ ...prev, addMusician: false }))}
                 musicians={musicians}
                 onSelect={handleAddMusiciansToCanvas}
+                currentMusicians={getCurrentMusiciansInCanvas()} // Add this prop
             />
 
             <InstrumentDialog
