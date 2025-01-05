@@ -1,47 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface Props {
     children: React.ReactNode;
-    node?: HTMLElement;
 }
 
-export class Portal extends React.Component<Props> {
-    private defaultNode: HTMLElement | null = null;
-    private root: ReactDOM.Root | null = null;
+export const Portal: React.FC<Props> = ({ children }) => {
+    const el = useRef(document.createElement('div'));
+    const mountPoint = useRef<HTMLElement | null>(null);
+    const isMounted = useRef(false);
 
-    componentDidMount() {
-        this.renderPortal();
-    }
+    useEffect(() => {
+        mountPoint.current = document.body;
+        const currentEl = el.current;
 
-    componentDidUpdate() {
-        this.renderPortal();
-    }
-
-    componentWillUnmount() {
-        if (this.defaultNode) {
-            document.body.removeChild(this.defaultNode);
-        }
-        this.defaultNode = null;
-        this.root?.unmount();
-    }
-
-    renderPortal() {
-        if (!this.props.node && !this.defaultNode) {
-            this.defaultNode = document.createElement('div');
-            document.body.appendChild(this.defaultNode);
+        if (!isMounted.current) {
+            mountPoint.current.appendChild(currentEl);
+            isMounted.current = true;
         }
 
-        const node = this.props.node || this.defaultNode;
-        if (!node) return;
+        return () => {
+            if (mountPoint.current && mountPoint.current.contains(currentEl)) {
+                mountPoint.current.removeChild(currentEl);
+            }
+            isMounted.current = false;
+        };
+    }, []);
 
-        if (!this.root) {
-            this.root = ReactDOM.createRoot(node);
-        }
-        this.root.render(this.props.children);
-    }
-
-    render() {
-        return null;
-    }
-}
+    return createPortal(children, el.current);
+};

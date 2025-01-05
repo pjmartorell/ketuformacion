@@ -3,6 +3,7 @@ import { Circle, Group, Image, Text } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import useImage from 'use-image';
 import { Position, Musician } from '../../types/types';
+import { useLongPress } from '../../hooks/useLongPress';
 
 interface Props {
     x: number;
@@ -12,7 +13,7 @@ interface Props {
     onDragMove: (pos: Position) => void;
     onDragStart: (e: KonvaEventObject<DragEvent>) => void;
     onDragEnd: (e: KonvaEventObject<DragEvent>) => void;
-    onDblClick: (e: KonvaEventObject<MouseEvent>) => void;
+    onContextMenu: (e: KonvaEventObject<MouseEvent>) => void;
     forceHover?: boolean;
 }
 
@@ -24,16 +25,36 @@ export const CanvasItem: React.FC<Props> = ({
     onDragMove,
     onDragStart,
     onDragEnd,
-    onDblClick,
+    onContextMenu,
     forceHover = false
 }) => {
     const [image] = useImage(imageUrl);
     const circleRadius = 40;
     const fontSize = 13;
     const [hover, setHover] = React.useState(false);
+    const [isDragging, setIsDragging] = React.useState(false);
 
-    // Calculate if we should show hover effect
+    const longPressHandlers = useLongPress({
+        onClick: (e) => {
+            if (!isDragging && e) {
+                e.evt.preventDefault();
+                e.cancelBubble = true;
+                onContextMenu(e as KonvaEventObject<MouseEvent>);
+            }
+        },
+        onLongPress: (e) => {
+            if (e) {
+                e.evt.preventDefault();
+                e.cancelBubble = true;
+                onContextMenu(e as KonvaEventObject<MouseEvent>);
+            }
+        },
+        ms: 500
+    });
+
     const showHoverEffect = hover || forceHover;
+
+    const { onMouseDown, onMouseUp, onTouchStart, onTouchEnd, onTouchMove } = longPressHandlers.handlers;
 
     return (
         <Group
@@ -41,14 +62,27 @@ export const CanvasItem: React.FC<Props> = ({
             y={y}
             draggable
             onDragMove={(e) => onDragMove({ x: e.target.x(), y: e.target.y() })}
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
-            onDblClick={onDblClick}
-            onDblTap={onDblClick}
+            onDragStart={(e) => {
+                setIsDragging(true);
+                onDragStart(e);
+            }}
+            onDragEnd={(e) => {
+                setIsDragging(false);
+                onDragEnd(e);
+            }}
+            onContextMenu={(e) => {
+                e.evt.preventDefault();
+                e.cancelBubble = true;
+                onContextMenu(e);
+            }}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            onTouchMove={onTouchMove}
         >
-            {/* Outer glowing ring */}
             <Circle
                 radius={circleRadius + 2}
                 fillLinearGradientStartPoint={{ x: -circleRadius, y: -circleRadius }}
@@ -60,7 +94,6 @@ export const CanvasItem: React.FC<Props> = ({
                 shadowOpacity={0.3}
             />
 
-            {/* Main circle */}
             <Circle
                 radius={circleRadius}
                 fill="white"
@@ -70,7 +103,6 @@ export const CanvasItem: React.FC<Props> = ({
                 shadowOffset={{ x: 0, y: 2 }}
             />
 
-            {/* Image container */}
             <Group
                 clipFunc={(ctx) => {
                     ctx.arc(0, 0, circleRadius - 2, 0, Math.PI * 2, false);
@@ -87,12 +119,11 @@ export const CanvasItem: React.FC<Props> = ({
                 )}
             </Group>
 
-            {/* Name label */}
             <Text
                 text={musician.name}
                 fontSize={fontSize}
                 fontStyle="bold"
-                fill="#0d47a1"  // Dark blue from the theme
+                fill="#0d47a1"
                 align="center"
                 width={circleRadius * 2}
                 x={-circleRadius}
@@ -102,12 +133,11 @@ export const CanvasItem: React.FC<Props> = ({
                 shadowOpacity={0.8}
             />
 
-            {/* Instrument label */}
             <Text
                 text={musician.instrument}
                 fontSize={fontSize}
                 fontStyle="bold"
-                fill="#0d47a1"  // Dark blue from the theme
+                fill="#0d47a1"
                 align="center"
                 width={circleRadius * 2}
                 x={-circleRadius}

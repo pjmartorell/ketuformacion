@@ -215,14 +215,27 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         );
     };
 
-    const handleContextMenu = (e: Konva.KonvaEventObject<MouseEvent>, itemId: number) => {
+    const handleContextMenu = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>, itemId: number) => {
         e.evt.preventDefault();
+        e.cancelBubble = true;
+
         const stage = e.target.getStage();
         if (!stage) return;
 
-        const pos = stage.getPointerPosition();
+        let pos;
+        if ('touches' in e.evt) {
+            const touch = e.evt.touches[0];
+            pos = {
+                x: touch.clientX,
+                y: touch.clientY
+            };
+        } else {
+            pos = stage.getPointerPosition();
+        }
+
         if (!pos) return;
 
+        // Use a single setState call to prevent race conditions
         setContextMenu({
             visible: true,
             position: pos,
@@ -439,6 +452,29 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         setFirstItemId(master.id);
     }, []);
 
+    // Add this useEffect for handling clicks outside context menu
+    useEffect(() => {
+        const handleClick = (e: MouseEvent) => {
+            if (contextMenu.visible) {
+                setContextMenu(prev => ({ ...prev, visible: false }));
+            }
+        };
+
+        window.addEventListener('click', handleClick);
+        return () => window.removeEventListener('click', handleClick);
+    }, [contextMenu.visible]);
+
+    // Cleanup context menu on unmount
+    useEffect(() => {
+        return () => {
+            setContextMenu({
+                visible: false,
+                position: { x: 0, y: 0 },
+                currentItemId: null
+            });
+        };
+    }, []);
+
     return (
         <div>
             <Toolbar>
@@ -501,13 +537,13 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                             onDragMove={(pos) => handleDragMove(item.id, pos)}
                             onDragStart={handleDragStart}
                             onDragEnd={handleDragEnd}
-                            onDblClick={(e) => handleContextMenu(e, item.id)}
+                            onContextMenu={(e) => handleContextMenu(e, item.id)} // Changed from onDblClick to onContextMenu
                         />
                     ))}
                 </Layer>
             </Stage>
 
-            {contextMenu.visible && (
+            {contextMenu.visible && contextMenu.currentItemId && (
                 <Portal>
                     <ContextMenu
                         position={contextMenu.position}

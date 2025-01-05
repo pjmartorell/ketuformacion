@@ -3,10 +3,15 @@ import { Position } from '../../types/types';
 import styled from 'styled-components';
 
 const MenuContainer = styled.div`
-    position: absolute;
+    position: fixed; // Change from absolute to fixed for better mobile positioning
     background-color: white;
     box-shadow: 0 0 5px grey;
     border-radius: 3px;
+    z-index: 1000;
+    max-width: 200px;
+    width: 90%; // More mobile-friendly width
+    transform: translate(-50%, -50%); // Center the menu
+    touch-action: none; // Prevent default touch actions
 `;
 
 const MenuList = styled.ul`
@@ -39,7 +44,14 @@ export const ContextMenu: React.FC<Props> = ({ position, onOptionSelected, delet
     };
 
     return (
-        <MenuContainer style={{ left: position.x, top: position.y }}>
+        <MenuContainer
+            style={{
+                left: `${position.x}px`,
+                top: `${position.y}px`,
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+        >
             <MenuList>
                 <MenuItem onClick={handleOptionSelected('change_instrument')}>
                     Cambiar instrumento
