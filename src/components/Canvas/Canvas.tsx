@@ -279,48 +279,55 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         const stage = stageRef.current;
         const boundingBox = calculateBoundingBox(items);
 
-        // Store original transform
-        const originalTransform = {
-            scale: stage.scale(),
-            position: stage.position(),
-            size: {
-                width: stage.width(),
-                height: stage.height()
-            }
-        };
+        // Create temporary container
+        const tempContainer = document.createElement('div');
+        tempContainer.style.display = 'none';
+        document.body.appendChild(tempContainer);
 
-        // Higher scale for better quality
-        const exportScale = 3;
-
-        // Reset stage transform before export
-        stage.scale({ x: 1, y: 1 });
-        stage.position({ x: 0, y: 0 });
-
-        // Set stage size to match content
-        stage.width(boundingBox.width);
-        stage.height(boundingBox.height);
-
-        // Center all content
-        stage.position({
-            x: -boundingBox.x,
-            y: -boundingBox.y
+        // Create a temporary stage and layer for export
+        const tempStage = new Konva.Stage({
+            container: tempContainer,
+            width: boundingBox.width,
+            height: boundingBox.height,
         });
 
-        // Create the data URL with high resolution
-        const dataURL = stage.toDataURL({
-            pixelRatio: exportScale,
+        const tempLayer = new Konva.Layer();
+        tempStage.add(tempLayer);
+
+        // Add white background
+        const background = new Konva.Rect({
+            x: 0,
+            y: 0,
+            width: boundingBox.width,
+            height: boundingBox.height,
+            fill: 'white',
+        });
+        tempLayer.add(background);
+
+        // Clone all nodes and adjust their positions
+        stage.find('Layer').forEach(layer => {
+            (layer as Konva.Layer).getChildren().forEach(child => {
+                if ((child as Konva.Shape).name() !== 'background') { // Skip original background
+                    const clone = child.clone();
+                    clone.x(clone.x() - boundingBox.x);
+                    clone.y(clone.y() - boundingBox.y);
+                    tempLayer.add(clone);
+                }
+            });
+        });
+
+        // Create the data URL from the temporary stage
+        const dataURL = tempStage.toDataURL({
+            pixelRatio: 2,
             mimeType: 'image/png',
             quality: 1
         });
 
-        // Restore original stage properties
-        stage.scale(originalTransform.scale);
-        stage.position(originalTransform.position);
-        stage.width(originalTransform.size.width);
-        stage.height(originalTransform.size.height);
-        stage.batchDraw();
+        // Clean up
+        tempStage.destroy();
+        document.body.removeChild(tempContainer);
 
-        // Download the image
+        // Download image
         const link = document.createElement('a');
         link.download = 'canvas-export.png';
         link.href = dataURL;
@@ -461,18 +468,23 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                 ref={stageRef}
                 draggable
             >
-                <Background width={window.innerWidth/0.3} height={window.innerHeight/0.3} color="white" />
                 <Layer>
+                    <Background
+                        width={window.innerWidth/0.3}
+                        height={window.innerHeight/0.3}
+                        color="white"
+                        name="background"
+                    />
                     {showLines && lines.map(line => (
                         <CanvasLine
-                            key={`line-${line.id}`} // Ensure unique key for lines
+                            key={`line-${line.id}`}
                             startItem={items.find(item => item.id === line.startItemId)}
                             endItem={items.find(item => item.id === line.endItemId)}
                         />
                     ))}
                     {items.map(item => (
                         <CanvasItem
-                            key={`item-${item.id}-${item.musician.id}`} // Ensure unique key for items
+                            key={`item-${item.id}-${item.musician.id}`}
                             x={item.x || 100}
                             y={item.y || 100}
                             musician={item.musician}

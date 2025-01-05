@@ -1,16 +1,22 @@
 import React from 'react';
-import { Layer, Rect } from 'react-konva';
+import { Rect } from 'react-konva';
 
-interface Props {
+interface BackgroundProps {
     width: number;
     height: number;
     color: string;
+    name?: string;
 }
 
-export const Background: React.FC<Props> = ({ width, height, color }) => {
+export const Background: React.FC<BackgroundProps> = ({ width, height, color, name }) => {
     return (
-        <Layer>
-            <Rect width={width} height={height} fill={color} />
-        </Layer>
+        <Rect
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            fill={color}
+            name={name}
+        />
     );
 };
