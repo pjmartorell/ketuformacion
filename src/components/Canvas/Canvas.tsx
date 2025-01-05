@@ -245,10 +245,82 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         setContextMenu(prev => ({ ...prev, visible: false }));
     };
 
+    const calculateBoundingBox = (items: CanvasItemType[]) => {
+        if (items.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+
+        // Avatar size in pixels (assuming square avatars)
+        const AVATAR_SIZE = 80;
+        const PADDING = 20; // Increased padding for safety
+
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        items.forEach(item => {
+            // Consider the full width and height of avatars
+            minX = Math.min(minX, item.x - AVATAR_SIZE/2);
+            minY = Math.min(minY, item.y - AVATAR_SIZE/2);
+            maxX = Math.max(maxX, item.x + AVATAR_SIZE/2);
+            maxY = Math.max(maxY, item.y + AVATAR_SIZE/2);
+        });
+
+        return {
+            x: minX - PADDING,
+            y: minY - PADDING,
+            width: (maxX - minX) + (PADDING * 2),
+            height: (maxY - minY) + (PADDING * 2)
+        };
+    };
+
     const handleExportCanvas = () => {
         if (!stageRef.current) return;
 
-        const dataURL = stageRef.current.toDataURL();
+        const stage = stageRef.current;
+        const boundingBox = calculateBoundingBox(items);
+
+        // Store original transform
+        const originalTransform = {
+            scale: stage.scale(),
+            position: stage.position(),
+            size: {
+                width: stage.width(),
+                height: stage.height()
+            }
+        };
+
+        // Higher scale for better quality
+        const exportScale = 3;
+
+        // Reset stage transform before export
+        stage.scale({ x: 1, y: 1 });
+        stage.position({ x: 0, y: 0 });
+
+        // Set stage size to match content
+        stage.width(boundingBox.width);
+        stage.height(boundingBox.height);
+
+        // Center all content
+        stage.position({
+            x: -boundingBox.x,
+            y: -boundingBox.y
+        });
+
+        // Create the data URL with high resolution
+        const dataURL = stage.toDataURL({
+            pixelRatio: exportScale,
+            mimeType: 'image/png',
+            quality: 1
+        });
+
+        // Restore original stage properties
+        stage.scale(originalTransform.scale);
+        stage.position(originalTransform.position);
+        stage.width(originalTransform.size.width);
+        stage.height(originalTransform.size.height);
+        stage.batchDraw();
+
+        // Download the image
         const link = document.createElement('a');
         link.download = 'canvas-export.png';
         link.href = dataURL;
