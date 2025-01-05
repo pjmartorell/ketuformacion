@@ -34,3 +34,20 @@ export interface MusicianFormData {
     instrument: string;
     imageFile?: File;
 }
+
+export interface CanvasDesign {
+    id: string;
+    name: string;
+    createdAt: number;
+    updatedAt: number;
+    items: CanvasItem[];
+    lines: CanvasLine[];
+    scale: number;
+    position: Position;
+}
+
+export interface CanvasLine {
+    id: string;
+    startItemId: number;
+    endItemId: number;
+}

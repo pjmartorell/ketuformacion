@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layer, Stage } from 'react-konva';
 import Konva from 'konva';
-import { CanvasItem as CanvasItemType, Musician, Position, Instrument } from '../../types/types';
+import { CanvasItem as CanvasItemType, Musician, Position, Instrument, CanvasDesign } from '../../types/types';
 import { CanvasItem } from './CanvasItem';
 import { CanvasLine } from './CanvasLine';
 import { Background } from './Background';
@@ -16,6 +16,8 @@ import styled from 'styled-components';
 import { MusicianDialog } from '../Dialog/MusicianDialog';
 import { storageService } from '../../services/storage';
 import { resizeImage } from '../../utils/imageUtils';
+import { canvasStorage } from '../../services/canvasStorage';
+import { CanvasDesignsDialog } from '../Dialog/CanvasDesignsDialog';
 
 interface CanvasProps {
     initialMusicians?: Musician[];
@@ -166,9 +168,17 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
 
     const [isExporting, setIsExporting] = useState(false);
 
+    const [designs, setDesigns] = useState<CanvasDesign[]>([]);
+    const [currentDesign, setCurrentDesign] = useState<CanvasDesign>();
+    const [isDesignsDialogOpen, setIsDesignsDialogOpen] = useState(false);
+
     useEffect(() => {
         storageService.initializeIfNeeded();
         setMusicians(storageService.getMusicians());
+    }, []);
+
+    useEffect(() => {
+        setDesigns(canvasStorage.getAll());
     }, []);
 
     const handleZoom = (newScale: number) => {
@@ -564,6 +574,42 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         setDialogs(prev => ({ ...prev, instrument: false }));
     };
 
+    const handleSaveDesign = (name: string) => {
+        const design: CanvasDesign = {
+            id: currentDesign?.id || '',
+            name,
+            items,
+            lines,
+            scale,
+            position: stageRef.current?.position() || { x: 0, y: 0 },
+            createdAt: currentDesign?.createdAt || Date.now(),
+            updatedAt: Date.now()
+        };
+
+        canvasStorage.save(design);
+        setDesigns(canvasStorage.getAll());
+        setCurrentDesign(design);
+    };
+
+    const handleLoadDesign = (design: CanvasDesign) => {
+        setItems(design.items);
+        setLines(design.lines);
+        setScale(design.scale);
+        if (stageRef.current) {
+            stageRef.current.position(design.position);
+        }
+        setCurrentDesign(design);
+        setIsDesignsDialogOpen(false);
+    };
+
+    const handleDeleteDesign = (id: string) => {
+        canvasStorage.delete(id);
+        setDesigns(canvasStorage.getAll());
+        if (currentDesign?.id === id) {
+            setCurrentDesign(undefined);
+        }
+    };
+
     return (
         <div>
             <Toolbar>
@@ -571,6 +617,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                     <HamburgerMenu
                         onMenuItemClick={() => setDialogs(prev => ({ ...prev, addMusician: true }))}
                         onExportCanvas={handleExportCanvas}
+                        onDesignsClick={() => setIsDesignsDialogOpen(true)}
                     />
                 </ToolbarGroup>
 
@@ -661,6 +708,16 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                 instruments={instruments}
                 onClose={() => setDialogs(prev => ({ ...prev, instrument: false }))}
                 onSelect={handleInstrumentChange}
+            />
+
+            <CanvasDesignsDialog
+                isOpen={isDesignsDialogOpen}
+                onClose={() => setIsDesignsDialogOpen(false)}
+                designs={designs}
+                onLoad={handleLoadDesign}
+                onSave={handleSaveDesign}
+                onDelete={handleDeleteDesign}
+                currentDesign={currentDesign}
             />
         </div>
     );

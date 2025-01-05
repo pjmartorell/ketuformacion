@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { HamburgerMenuIcon, PersonIcon, ImageIcon } from '@radix-ui/react-icons';
+import { HamburgerMenuIcon, PersonIcon, ImageIcon, ArchiveIcon } from '@radix-ui/react-icons';
 import styled from 'styled-components';
 
 interface Props {
     onMenuItemClick: () => void;
     onExportCanvas: () => void;
+    onDesignsClick: () => void;
 }
 
 const StyledTrigger = styled(DropdownMenu.Trigger)`
@@ -58,7 +59,7 @@ const StyledItem = styled(DropdownMenu.Item)`
   }
 `;
 
-export const HamburgerMenu: React.FC<Props> = ({ onMenuItemClick, onExportCanvas }) => {
+export const HamburgerMenu: React.FC<Props> = ({ onMenuItemClick, onExportCanvas, onDesignsClick }) => {
     return (
         <DropdownMenu.Root>
             <StyledTrigger>
@@ -70,6 +71,9 @@ export const HamburgerMenu: React.FC<Props> = ({ onMenuItemClick, onExportCanvas
                 </StyledItem>
                 <StyledItem onSelect={onExportCanvas}>
                     <ImageIcon /> Exportar imagen
+                </StyledItem>
+                <StyledItem onSelect={onDesignsClick}>
+                    <ArchiveIcon /> Mis Diseños
                 </StyledItem>
             </StyledContent>
         </DropdownMenu.Root>
