@@ -1,5 +1,29 @@
-import styled from 'styled-components';
+import * as Dialog from '@radix-ui/react-dialog';
+import styled, { keyframes } from 'styled-components';
 import { Theme } from '../../theme/theme';
+
+const overlayShow = keyframes`
+  from { opacity: 0 }
+  to { opacity: 1 }
+`;
+
+const contentShow = keyframes`
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+`;
+
+export const StyledOverlay = styled(Dialog.Overlay)`
+  background: ${({ theme }) => theme.colors.blackA9};
+  position: fixed;
+  inset: 0;
+  animation: ${overlayShow} 150ms cubic-bezier(0.16, 1, 0.3, 1);
+`;
 
 export const DialogContainer = styled.div<{ theme: Theme }>`
     position: fixed;
@@ -15,16 +39,19 @@ export const DialogContainer = styled.div<{ theme: Theme }>`
 `;
 
 export const DialogContent = styled.div<{ theme: Theme }>`
-    background: ${({ theme }) => theme.colors.background};
-    border-radius: ${({ theme }) => theme.borderRadius.md};
-    box-shadow: ${({ theme }) => theme.shadows.lg};
-    min-width: 300px;
-    max-width: 90vw;
-    padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.white[500]};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  min-width: 400px;
+  max-width: 90vw;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 export const DialogBody = styled.div<{ theme: Theme }>`
-    padding: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme }) => theme.colors.white[100]};
 `;
 
 export const DialogTitle = styled.h2<{ theme: Theme }>`
@@ -34,29 +61,44 @@ export const DialogTitle = styled.h2<{ theme: Theme }>`
 `;
 
 export const DialogHeader = styled.div<{ theme: Theme }>`
-    padding: ${({ theme }) => theme.spacing.md};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.gray.light};
-    font-weight: bold;
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.gradients.primary};
+  color: ${({ theme }) => theme.colors.white[500]};
+  font-weight: bold;
 `;
 
 export const DialogFooter = styled.div<{ theme: Theme }>`
-    padding: ${({ theme }) => theme.spacing.md};
-    border-top: 1px solid ${({ theme }) => theme.colors.gray.light};
-    display: flex;
-    justify-content: flex-end;
-    gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.white[200]};
+  display: flex;
+  justify-content: flex-end;
+  gap: ${({ theme }) => theme.spacing.sm};
 
-    button {
-        padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-        border: none;
-        border-radius: ${({ theme }) => theme.borderRadius.sm};
-        background: ${({ theme }) => theme.colors.primary};
-        color: white;
-        cursor: pointer;
-        transition: opacity ${({ theme }) => theme.transitions.fast};
+  button {
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+    border: none;
+    border-radius: ${({ theme }) => theme.borderRadius.md};
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-        &:hover {
-            opacity: 0.8;
-        }
+    &:first-child {
+      background: ${({ theme }) => theme.gradients.primary};
+      color: ${({ theme }) => theme.colors.white[500]};
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: ${({ theme }) => theme.shadows.md};
+      }
     }
+
+    &:last-child {
+      background: ${({ theme }) => theme.colors.white[300]};
+      color: ${({ theme }) => theme.colors.blue[900]};
+
+      &:hover {
+        background: ${({ theme }) => theme.colors.white[400]};
+      }
+    }
+  }
 `;

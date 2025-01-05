@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaBars } from 'react-icons/fa';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { HamburgerMenuIcon, PersonIcon, ImageIcon } from '@radix-ui/react-icons';
 import styled from 'styled-components';
 
 interface Props {
@@ -7,76 +8,70 @@ interface Props {
     onExportCanvas: () => void;
 }
 
-const MenuContainer = styled.div`
-    position: relative;
-    display: inline-block;
-    margin: 10px;
+const StyledTrigger = styled(DropdownMenu.Trigger)`
+  background: ${({ theme }) => theme.gradients.primary};
+  border: none;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  cursor: pointer;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.white[500]};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: ${({ theme }) => theme.shadows.lg};
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
-const MenuIcon = styled.div`
-    cursor: pointer;
-    z-index: 1;
+const StyledContent = styled(DropdownMenu.Content)`
+  background: ${({ theme }) => theme.colors.white[500]};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  min-width: 180px;
+  overflow: hidden;
+  padding: ${({ theme }) => theme.spacing.xs};
+  z-index: 100;
 `;
 
-const MenuDropdown = styled.div`
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: white;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-    width: 140px;
-    z-index: 2;
-`;
+const StyledItem = styled(DropdownMenu.Item)`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme }) => theme.colors.blue[900]};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  cursor: pointer;
+  transition: all 0.2s ease;
 
-const MenuItem = styled.div`
-    padding: 10px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    border-bottom: 1px solid #ccc;
-    &:last-child {
-        border-bottom: none;
-    }
-    &:hover {
-        background-color: #f0f0f0;
-    }
+  &:hover {
+    background: ${({ theme }) => theme.colors.blue[50]};
+    color: ${({ theme }) => theme.colors.blue[700]};
+  }
+
+  svg {
+    color: ${({ theme }) => theme.colors.blue[500]};
+  }
 `;
 
 export const HamburgerMenu: React.FC<Props> = ({ onMenuItemClick, onExportCanvas }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    useEffect(() => {
-        const handleOutsideClick = (e: MouseEvent) => {
-            if (isOpen && !(e.target as Element).closest('.menu-container')) {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener('click', handleOutsideClick);
-        return () => document.removeEventListener('click', handleOutsideClick);
-    }, [isOpen]);
-
     return (
-        <MenuContainer className="menu-container">
-            <MenuIcon onClick={() => setIsOpen(!isOpen)}>
-                <FaBars size={'2rem'} />
-            </MenuIcon>
-            {isOpen && (
-                <MenuDropdown>
-                    <MenuItem onClick={() => {
-                        onMenuItemClick();
-                        setIsOpen(false);
-                    }}>
-                        Percusionistas
-                    </MenuItem>
-                    <MenuItem onClick={() => {
-                        onExportCanvas();
-                        setIsOpen(false);
-                    }}>
-                        Exportar imagen
-                    </MenuItem>
-                </MenuDropdown>
-            )}
-        </MenuContainer>
+        <DropdownMenu.Root>
+            <StyledTrigger>
+                <HamburgerMenuIcon />
+            </StyledTrigger>
+            <StyledContent>
+                <StyledItem onSelect={onMenuItemClick}>
+                    <PersonIcon /> Percusionistas
+                </StyledItem>
+                <StyledItem onSelect={onExportCanvas}>
+                    <ImageIcon /> Exportar imagen
+                </StyledItem>
+            </StyledContent>
+        </DropdownMenu.Root>
     );
 };

@@ -26,24 +26,100 @@ interface ContextMenuState {
 }
 
 const Toolbar = styled.div`
-    display: flex;
-    align-items: center;
+  position: fixed;
+  bottom: ${({ theme }) => theme.spacing.lg};
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.sm};
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: ${({ theme }) => theme.borderRadius.xl};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  border: 1px solid ${({ theme }) => theme.colors.blue[200]};
+  z-index: 100;
+`;
+
+const ToolbarGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.xs};
+
+  &:not(:last-child) {
+    border-right: 2px solid ${({ theme }) => theme.colors.blue[200]};
+    padding-right: ${({ theme }) => theme.spacing.sm};
+  }
 `;
 
 const ZoomButton = styled.button`
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px;
+  background: ${({ theme }) => theme.gradients.primary};
+  color: ${({ theme }) => theme.colors.white[500]};
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: ${({ theme }) => theme.borderRadius.round};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadows.md};
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
-const LinesLabel = styled.label`
-    display: inline-block;
-    margin-left: 5px;
-    vertical-align: middle;
+const LinesToggle = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  cursor: pointer;
+  user-select: none;
+  color: ${({ theme }) => theme.colors.blue[900]};
+  font-weight: 500;
+  padding: ${({ theme }) => theme.spacing.xs}; // Added padding to match other groups
+
+  input {
+    appearance: none;
+    width: 40px;
+    height: 20px;
+    background: ${({ theme }) => theme.colors.white[300]};
+    border-radius: 20px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 2px ${({ theme }) => theme.colors.blackA5};
+
+    &:checked {
+      background: ${({ theme }) => theme.colors.blue[500]};
+    }
+
+    &:before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      background: white;
+      transition: transform 0.2s ease;
+      box-shadow: ${({ theme }) => theme.shadows.sm};
+    }
+
+    &:checked:before {
+      transform: translateX(20px);
+    }
+  }
 `;
 
 export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
@@ -56,7 +132,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     const stageRef = useRef<Konva.Stage>(null);
     const [scale, setScale] = useState<number>(1);
     const [items, setItems] = useState<CanvasItemType[]>([master]);
-    const [lines, setLines] = useState<Array<{id: number; startItemId: number; endItemId: number}>>([]);
+    const [lines, setLines] = useState<Array<{id: string; startItemId: number; endItemId: number}>>([]);
     const [firstItemId, setFirstItemId] = useState<number | null>(null);
     const [showLines, setShowLines] = useState<boolean>(true);
     const [musicians, setMusicians] = useState<Musician[]>([
@@ -279,24 +355,32 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     return (
         <div>
             <Toolbar>
-                <HamburgerMenu
-                    onMenuItemClick={() => setDialogs(prev => ({ ...prev, addMusician: true }))}
-                    onExportCanvas={handleExportCanvas}
-                />
-                <ZoomButton onClick={() => handleZoom(Math.min(scale * 1.1, 2.6))}>
-                    <FaSearchPlus />
-                </ZoomButton>
-                <ZoomButton onClick={() => handleZoom(Math.max(scale * 0.9, 0.3))}>
-                    <FaSearchMinus />
-                </ZoomButton>
-                <LinesLabel>
-                    <input
-                        type="checkbox"
-                        checked={showLines}
-                        onChange={() => setShowLines(!showLines)}
+                <ToolbarGroup>
+                    <HamburgerMenu
+                        onMenuItemClick={() => setDialogs(prev => ({ ...prev, addMusician: true }))}
+                        onExportCanvas={handleExportCanvas}
                     />
-                    Mostrar líneas
-                </LinesLabel>
+                </ToolbarGroup>
+
+                <ToolbarGroup>
+                    <ZoomButton onClick={() => handleZoom(Math.min(scale * 1.1, 2.6))} title="Zoom in">
+                        <FaSearchPlus size={16} />
+                    </ZoomButton>
+                    <ZoomButton onClick={() => handleZoom(Math.max(scale * 0.9, 0.3))} title="Zoom out">
+                        <FaSearchMinus size={16} />
+                    </ZoomButton>
+                </ToolbarGroup>
+
+                <ToolbarGroup>
+                    <LinesToggle>
+                        <input
+                            type="checkbox"
+                            checked={showLines}
+                            onChange={() => setShowLines(!showLines)}
+                        />
+                        <span>Mostrar líneas</span>
+                    </LinesToggle>
+                </ToolbarGroup>
             </Toolbar>
 
             <Stage

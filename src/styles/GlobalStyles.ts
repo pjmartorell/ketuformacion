@@ -1,7 +1,7 @@
 import { createGlobalStyle } from 'styled-components';
 import { Theme } from '../theme/theme';
 
-export const GlobalStyles = createGlobalStyle`
+export const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
   * {
     box-sizing: border-box;
     margin: 0;
@@ -16,13 +16,11 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family: system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background: ${({ theme }) => theme.colors.background};
-    color: ${({ theme }) => theme.colors.text};
+    color: ${({ theme }) => theme.colors.foreground};
   }
 
   #root {
