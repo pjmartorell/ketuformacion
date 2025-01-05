@@ -250,7 +250,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
 
         // Avatar size in pixels (assuming square avatars)
         const AVATAR_SIZE = 80;
-        const PADDING = 20; // Increased padding for safety
+        const PADDING = 30; // Increased padding for safety
 
         let minX = Infinity;
         let minY = Infinity;
