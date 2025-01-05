@@ -21,24 +21,4 @@ export const ToolbarContainer = styled.div<{ theme: Theme }>`
     backdrop-filter: blur(8px);
     border-radius: ${({ theme }) => theme.borderRadius.md};
     box-shadow: ${({ theme }) => theme.shadows.md};
-
-    .zoom-button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: ${({ theme }) => theme.spacing.xs};
-        border-radius: ${({ theme }) => theme.borderRadius.sm};
-        transition: background ${({ theme }) => theme.transitions.fast};
-
-        &:hover {
-            background: ${({ theme }) => theme.colors.gray.light};
-        }
-    }
-
-    .lines-label {
-        display: flex;
-        align-items: center;
-        gap: ${({ theme }) => theme.spacing.xs};
-        user-select: none;
-    }
 `;

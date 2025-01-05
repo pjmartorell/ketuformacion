@@ -4,7 +4,6 @@ import isPropValid from '@emotion/is-prop-valid';
 import { Canvas } from './components';
 import { InitialOverlayDialog } from './components/Dialog/InitialOverlayDialog';
 import { theme } from './theme/theme';
-import { MusicianProvider } from './context/MusicianContext';
 import { GlobalStyles } from './styles/GlobalStyles';
 
 const App: React.FC = () => {
@@ -14,12 +13,10 @@ const App: React.FC = () => {
     <StyleSheetManager shouldForwardProp={isPropValid}>
       <ThemeProvider theme={theme}>
         <GlobalStyles theme={theme} />
-        <MusicianProvider>
-          <div className="App">
-            {!hasHiddenInitialDialog && <InitialOverlayDialog />}
-            <Canvas />
-          </div>
-        </MusicianProvider>
+        <div className="App">
+          {!hasHiddenInitialDialog && <InitialOverlayDialog />}
+          <Canvas />
+        </div>
       </ThemeProvider>
     </StyleSheetManager>
   );

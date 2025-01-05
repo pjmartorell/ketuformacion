@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import styled from 'styled-components';
-import { Cross2Icon, PersonIcon } from '@radix-ui/react-icons';
-import { useMusician } from '../../context/MusicianContext';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { Musician } from '../../types/types';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
@@ -199,7 +198,6 @@ interface Props {
 }
 
 export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, onSelect, currentMusicians }) => {
-    const { state, dispatch } = useMusician();
     const [selectedMusicians, setSelectedMusicians] = useState<Musician[]>([]);
 
     useEffect(() => {
@@ -219,9 +217,6 @@ export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, on
     };
 
     const handleConfirm = () => {
-        selectedMusicians.forEach(musician => {
-            dispatch({ type: 'ADD_MUSICIAN', payload: musician });
-        });
         onSelect(selectedMusicians);
         onClose();
     };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layer, Stage, StageProps } from 'react-konva';
+import { Layer, Stage } from 'react-konva';
 import Konva from 'konva';
 import { CanvasItem as CanvasItemType, Musician, Position, Instrument } from '../../types/types';
 import { CanvasItem } from './CanvasItem';
@@ -157,7 +157,6 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         { id: 20, name: 'Sab', instrument: 'M' },
         { id: 21, name: 'Moni', instrument: 'M' },
     ]);
-    const [selectedMusicians, setSelectedMusicians] = useState<Musician[]>([]);
     const [instruments] = useState<Instrument[]>([
         { id: 1, name: 'R' },
         { id: 2, name: 'F1' },
