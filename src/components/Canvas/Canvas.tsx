@@ -39,7 +39,7 @@ const Toolbar = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.xl};
   box-shadow: ${({ theme }) => theme.shadows.lg};
   border: 1px solid ${({ theme }) => theme.colors.blue[200]};
-  z-index: 100;
+  z-index: 1000; // Lower than dialog
 `;
 
 const ToolbarGroup = styled.div`
