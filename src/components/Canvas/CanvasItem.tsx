@@ -13,6 +13,7 @@ interface Props {
     onDragStart: (e: KonvaEventObject<DragEvent>) => void;
     onDragEnd: (e: KonvaEventObject<DragEvent>) => void;
     onDblClick: (e: KonvaEventObject<MouseEvent>) => void;
+    forceHover?: boolean;
 }
 
 export const CanvasItem: React.FC<Props> = ({
@@ -23,12 +24,16 @@ export const CanvasItem: React.FC<Props> = ({
     onDragMove,
     onDragStart,
     onDragEnd,
-    onDblClick
+    onDblClick,
+    forceHover = false
 }) => {
     const [image] = useImage(imageUrl);
     const circleRadius = 40;
     const fontSize = 13;
     const [hover, setHover] = React.useState(false);
+
+    // Calculate if we should show hover effect
+    const showHoverEffect = hover || forceHover;
 
     return (
         <Group
@@ -49,7 +54,7 @@ export const CanvasItem: React.FC<Props> = ({
                 fillLinearGradientStartPoint={{ x: -circleRadius, y: -circleRadius }}
                 fillLinearGradientEndPoint={{ x: circleRadius, y: circleRadius }}
                 fillLinearGradientColorStops={[0, '#2196f3', 1, '#0d47a1']}
-                opacity={hover ? 0.8 : 0.4}
+                opacity={showHoverEffect ? 0.8 : 0.4}
                 shadowColor="#1976d2"
                 shadowBlur={15}
                 shadowOpacity={0.3}

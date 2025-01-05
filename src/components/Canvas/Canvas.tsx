@@ -180,6 +180,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     });
 
     const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
+    const [isExporting, setIsExporting] = useState(false);
 
     const handleZoom = (newScale: number) => {
         if (stageRef.current) {
@@ -276,64 +277,71 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     const handleExportCanvas = () => {
         if (!stageRef.current) return;
 
-        const stage = stageRef.current;
-        const boundingBox = calculateBoundingBox(items);
+        setIsExporting(true); // Set exporting state to true before creating image
 
-        // Create temporary container
-        const tempContainer = document.createElement('div');
-        tempContainer.style.display = 'none';
-        document.body.appendChild(tempContainer);
+        // Small delay to ensure the UI updates before taking the screenshot
+        setTimeout(() => {
+            const stage = stageRef.current;
+            const boundingBox = calculateBoundingBox(items);
 
-        // Create a temporary stage and layer for export
-        const tempStage = new Konva.Stage({
-            container: tempContainer,
-            width: boundingBox.width,
-            height: boundingBox.height,
-        });
+            // Create temporary container
+            const tempContainer = document.createElement('div');
+            tempContainer.style.display = 'none';
+            document.body.appendChild(tempContainer);
 
-        const tempLayer = new Konva.Layer();
-        tempStage.add(tempLayer);
-
-        // Add white background
-        const background = new Konva.Rect({
-            x: 0,
-            y: 0,
-            width: boundingBox.width,
-            height: boundingBox.height,
-            fill: 'white',
-        });
-        tempLayer.add(background);
-
-        // Clone all nodes and adjust their positions
-        stage.find('Layer').forEach(layer => {
-            (layer as Konva.Layer).getChildren().forEach(child => {
-                if ((child as Konva.Shape).name() !== 'background') { // Skip original background
-                    const clone = child.clone();
-                    clone.x(clone.x() - boundingBox.x);
-                    clone.y(clone.y() - boundingBox.y);
-                    tempLayer.add(clone);
-                }
+            // Create a temporary stage and layer for export
+            const tempStage = new Konva.Stage({
+                container: tempContainer,
+                width: boundingBox.width,
+                height: boundingBox.height,
             });
-        });
 
-        // Create the data URL from the temporary stage
-        const dataURL = tempStage.toDataURL({
-            pixelRatio: 2,
-            mimeType: 'image/png',
-            quality: 1
-        });
+            const tempLayer = new Konva.Layer();
+            tempStage.add(tempLayer);
 
-        // Clean up
-        tempStage.destroy();
-        document.body.removeChild(tempContainer);
+            // Add white background
+            const background = new Konva.Rect({
+                x: 0,
+                y: 0,
+                width: boundingBox.width,
+                height: boundingBox.height,
+                fill: 'white',
+            });
+            tempLayer.add(background);
 
-        // Download image
-        const link = document.createElement('a');
-        link.download = 'canvas-export.png';
-        link.href = dataURL;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            // Clone all nodes and adjust their positions
+            stage.find('Layer').forEach(layer => {
+                (layer as Konva.Layer).getChildren().forEach(child => {
+                    if ((child as Konva.Shape).name() !== 'background') { // Skip original background
+                        const clone = child.clone();
+                        clone.x(clone.x() - boundingBox.x);
+                        clone.y(clone.y() - boundingBox.y);
+                        tempLayer.add(clone);
+                    }
+                });
+            });
+
+            // Create the data URL from the temporary stage
+            const dataURL = tempStage.toDataURL({
+                pixelRatio: 2,
+                mimeType: 'image/png',
+                quality: 1
+            });
+
+            // Clean up
+            tempStage.destroy();
+            document.body.removeChild(tempContainer);
+
+            // Download image
+            const link = document.createElement('a');
+            link.download = 'canvas-export.png';
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setIsExporting(false); // Reset exporting state
+        }, 100);
     };
 
     const addLineConnection = (endId: number) => {
@@ -485,6 +493,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                     {items.map(item => (
                         <CanvasItem
                             key={`item-${item.id}-${item.musician.id}`}
+                            forceHover={isExporting}
                             x={item.x || 100}
                             y={item.y || 100}
                             musician={item.musician}
