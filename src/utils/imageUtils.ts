@@ -61,40 +61,40 @@ export class ImageUtils {
 
       img.onerror = () => {
         URL.revokeObjectURL(img.src);
-        reject(new Error('Failed to load image'));
+        reject(new Error('Error al cargar la imagen'));
       };
     });
   }
 
-  static async validateImage(file: File): Promise<boolean> {
+static async validateImage(file: File): Promise<boolean> {
     if (!this.isValidImageFormat(file)) {
-      throw new Error(
-        `Unsupported format. Supported formats: ${this.SUPPORTED_FORMATS.map(f => f.split('/')[1]).join(', ')}`
-      );
+        throw new Error(
+            `Formato no soportado. Formatos soportados: ${this.SUPPORTED_FORMATS.map(f => f.split('/')[1]).join(', ')}`
+        );
     }
 
     if (!this.isValidFileSize(file)) {
-      throw new Error(`File size must be less than ${this.MAX_FILE_SIZE / (1024 * 1024)}MB`);
+        throw new Error(`El tamaño del archivo debe ser menor a ${this.MAX_FILE_SIZE / (1024 * 1024)}MB`);
     }
 
     try {
-      // Skip dimension checks for vector formats
-      if (this.isVectorFormat(file.type)) {
-        return true;
-      }
+        // Skip dimension checks for vector formats
+        if (this.isVectorFormat(file.type)) {
+            return true;
+        }
 
-      const dimensions = await this.getImageDimensions(file);
-      if (dimensions.width < 100 || dimensions.height < 100) {
-        throw new Error('Image dimensions too small. Minimum 100x100 pixels required.');
-      }
-      if (dimensions.width > 4000 || dimensions.height > 4000) {
-        throw new Error('Image dimensions too large. Maximum 4000x4000 pixels allowed.');
-      }
-      return true;
+        const dimensions = await this.getImageDimensions(file);
+        if (dimensions.width < 100 || dimensions.height < 100) {
+            throw new Error('Las dimensiones de la imagen son demasiado pequeñas. Se requieren al menos 100x100 píxeles.');
+        }
+        if (dimensions.width > 4000 || dimensions.height > 4000) {
+            throw new Error('Las dimensiones de la imagen son demasiado grandes. Se permiten un máximo de 4000x4000 píxeles.');
+        }
+        return true;
     } catch (error) {
-      throw new Error(`Image validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(`La validación de la imagen falló: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
-  }
+}
 
   static async processImage(file: File, config: Partial<ImageConfig> = {}): Promise<ProcessedImage> {
     const finalConfig = { ...this.DEFAULT_CONFIG, ...config };
@@ -113,7 +113,7 @@ export class ImageUtils {
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas context not available');
+    throw new Error('Contexto de canvas no disponible');
 
     const img = await this.loadImage(file);
     let { width, height } = this.calculateAspectRatio(
@@ -159,7 +159,7 @@ export class ImageUtils {
       };
       img.onerror = () => {
         URL.revokeObjectURL(img.src);
-        reject(new Error('Failed to load image'));
+        reject(new Error('Error al cargar la imagen'));
       };
     });
   }
@@ -188,7 +188,7 @@ export class ImageUtils {
           if (blob) {
             resolve(blob);
           } else {
-            reject(new Error('Failed to convert canvas to blob'));
+            reject(new Error('Error al convertir el canvas a blob'));
           }
         },
         type,
@@ -213,7 +213,7 @@ export class ImageUtils {
             if (blob) {
               resolve(blob);
             } else {
-              reject(new Error('Failed to convert to WebP'));
+              reject(new Error('Error al convertir a WebP'));
             }
           },
           'image/webp',
@@ -226,7 +226,7 @@ export class ImageUtils {
             if (blob) {
               resolve(blob);
             } else {
-              reject(new Error('Failed to convert to PNG'));
+              reject(new Error('Error al convertir a PNG'));
             }
           },
           'image/png',
@@ -244,7 +244,7 @@ export class ImageUtils {
       const cleanedSvg = this.cleanSvg(text);
       return new Blob([cleanedSvg], { type: 'image/svg+xml' });
     }
-    throw new Error('Unsupported vector format');
+    throw new Error('Formato vectorial no soportado');
   }
 
   private static cleanSvg(svgContent: string): string {

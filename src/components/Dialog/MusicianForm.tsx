@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Musician } from '../../types/types';
 import { storageService } from '../../services/storage';
 import { resizeImage } from '../../utils/imageUtils';
+import { useToast } from '../../context/ToastContext';
 
 const Form = styled.form`
   display: flex;
@@ -100,6 +101,7 @@ const MusicianFormComponent: React.FC<Props> = ({
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (musician) {
@@ -133,12 +135,16 @@ const MusicianFormComponent: React.FC<Props> = ({
         setImagePreview(resizedImage);
       } catch (error) {
         console.error('Error resizing image:', error);
-        // Fallback to original file preview
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          setImagePreview(event.target?.result as string);
-        };
-        reader.readAsDataURL(file);
+        showToast({
+          title: 'Error al procesar la imagen',
+          description: error instanceof Error ? error.message : 'Error desconocido',
+          type: 'error'
+        });
+
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     }
   };
