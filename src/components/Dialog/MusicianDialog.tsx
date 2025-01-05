@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { Cross2Icon, PersonIcon } from '@radix-ui/react-icons';
 import { useMusician } from '../../context/MusicianContext';
 import { Musician } from '../../types/types';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const StyledOverlay = styled(Dialog.Overlay)`
   position: fixed;
@@ -225,6 +226,11 @@ export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, on
             <Dialog.Portal>
                 <StyledOverlay />
                 <StyledContent>
+                    <VisuallyHidden>
+                        <Dialog.Description>
+                            Description goes here
+                        </Dialog.Description>
+                    </VisuallyHidden>
                     <HeaderSection>
                         <StyledTitle>Seleccionar Percusionistas</StyledTitle>
                         <Subtitle>Elige los integrantes para tu formación</Subtitle>
