@@ -13,7 +13,7 @@ const App: React.FC = () => {
   return (
     <StyleSheetManager shouldForwardProp={isPropValid}>
       <ThemeProvider theme={theme}>
-        <GlobalStyles />
+        <GlobalStyles theme={theme} />
         <MusicianProvider>
           <div className="App">
             {!hasHiddenInitialDialog && <InitialOverlayDialog />}
