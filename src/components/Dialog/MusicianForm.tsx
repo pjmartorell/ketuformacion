@@ -134,7 +134,6 @@ const MusicianFormComponent: React.FC<Props> = ({
         const resizedImage = await resizeImage(file, 200, 200, 0.8);
         setImagePreview(resizedImage);
       } catch (error) {
-        console.error('Error resizing image:', error);
         showToast({
           title: 'Error al procesar la imagen',
           description: error instanceof Error ? error.message : 'Error desconocido',
