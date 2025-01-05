@@ -3,6 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Cross2Icon } from '@radix-ui/react-icons';
 import { Instrument } from '../../types/types';
 import styled from 'styled-components';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const StyledOverlay = styled(Dialog.Overlay)`
   position: fixed;
@@ -160,6 +161,11 @@ export const InstrumentDialog: React.FC<Props> = ({ isOpen, instruments, onClose
             <Dialog.Portal>
                 <StyledOverlay />
                 <StyledContent>
+                    <VisuallyHidden>
+                        <Dialog.Description>
+                            Selecciona un nuevo instrumento para el músico
+                        </Dialog.Description>
+                    </VisuallyHidden>
                     <HeaderSection>
                         <StyledTitle>Cambiar Instrumento</StyledTitle>
                         <Subtitle>Selecciona el nuevo instrumento</Subtitle>
