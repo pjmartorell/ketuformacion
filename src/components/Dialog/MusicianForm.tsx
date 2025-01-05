@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Musician } from '../../types/types';
 import { storageService } from '../../services/storage';
+import { resizeImage } from '../../utils/imageUtils';
 
 const Form = styled.form`
   display: flex;
@@ -123,15 +124,22 @@ const MusicianFormComponent: React.FC<Props> = ({
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setImagePreview(result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Show resized version in preview
+        const resizedImage = await resizeImage(file, 200, 200, 0.8);
+        setImagePreview(resizedImage);
+      } catch (error) {
+        console.error('Error resizing image:', error);
+        // Fallback to original file preview
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setImagePreview(event.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 

@@ -15,6 +15,7 @@ import { KonvaEventObject } from 'konva/lib/Node';
 import styled from 'styled-components';
 import { MusicianDialog } from '../Dialog/MusicianDialog';
 import { storageService } from '../../services/storage';
+import { resizeImage } from '../../utils/imageUtils';
 
 interface CanvasProps {
     initialMusicians?: Musician[];
@@ -492,11 +493,18 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
 
         // Handle image file if provided
         if (imageFile) {
-            avatarDataUrl = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.readAsDataURL(imageFile);
-            });
+            try {
+                // Resize image before saving
+                avatarDataUrl = await resizeImage(imageFile, 200, 200, 0.8);
+            } catch (error) {
+                console.error('Error resizing image:', error);
+                // Fallback to original file if resize fails
+                avatarDataUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.readAsDataURL(imageFile);
+                });
+            }
         }
 
         // Update musician data
