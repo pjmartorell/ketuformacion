@@ -57,7 +57,7 @@ export const DialogBody = styled.div<{ theme: Theme }>`
 export const DialogTitle = styled.h2<{ theme: Theme }>`
     margin: 0;
     font-size: 1.25rem;
-    color: ${({ theme }) => theme.colors.text};
+    color: ${({ theme }) => theme.colors.foreground};
 `;
 
 export const DialogHeader = styled.div<{ theme: Theme }>`
