@@ -14,6 +14,7 @@ import { FaSearchPlus, FaSearchMinus } from 'react-icons/fa';
 import { KonvaEventObject } from 'konva/lib/Node';
 import styled from 'styled-components';
 import { MusicianDialog } from '../Dialog/MusicianDialog';
+import { storageService } from '../../services/storage';
 
 interface CanvasProps {
     initialMusicians?: Musician[];
@@ -135,28 +136,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     const [lines, setLines] = useState<Array<{id: string; startItemId: number; endItemId: number}>>([]);
     const [firstItemId, setFirstItemId] = useState<number | null>(null);
     const [showLines, setShowLines] = useState<boolean>(true);
-    const [musicians, setMusicians] = useState<Musician[]>([
-        { id: 2, name: 'Leti', instrument: 'F1' },
-        { id: 3, name: 'Joanna', instrument: 'C' },
-        { id: 4, name: 'Aitor', instrument: 'C' },
-        { id: 5, name: 'Manu', instrument: 'C' },
-        { id: 6, name: 'Leo', instrument: 'C' },
-        { id: 7, name: 'Snez', instrument: 'C' },
-        { id: 8, name: 'Pere', instrument: 'C' },
-        { id: 9, name: 'Wally', instrument: 'C' },
-        { id: 10, name: 'Adeline', instrument: 'D1' },
-        { id: 11, name: 'Maria', instrument: 'D1' },
-        { id: 12, name: 'Emiliana', instrument: 'D1' },
-        { id: 13, name: 'Nicole', instrument: 'D1' },
-        { id: 14, name: 'Maya', instrument: 'D1' },
-        { id: 15, name: 'Elena', instrument: 'D2' },
-        { id: 16, name: 'Sara', instrument: 'D2' },
-        { id: 17, name: 'Lucia', instrument: 'D2' },
-        { id: 18, name: 'Tania', instrument: 'F2' },
-        { id: 19, name: 'Lara', instrument: 'F2' },
-        { id: 20, name: 'Sab', instrument: 'M' },
-        { id: 21, name: 'Moni', instrument: 'M' },
-    ]);
+    const [musicians, setMusicians] = useState<Musician[]>([]);
     const [instruments] = useState<Instrument[]>([
         { id: 1, name: 'R' },
         { id: 2, name: 'F1' },
@@ -178,7 +158,17 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         instrument: false
     });
 
+    const [editDialog, setEditDialog] = useState<{ isOpen: boolean; musician?: Musician }>({
+        isOpen: false,
+        musician: undefined,
+    });
+
     const [isExporting, setIsExporting] = useState(false);
+
+    useEffect(() => {
+        storageService.initializeIfNeeded();
+        setMusicians(storageService.getMusicians());
+    }, []);
 
     const handleZoom = (newScale: number) => {
         if (stageRef.current) {
@@ -429,6 +419,28 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         return items.map(item => item.musician);
     };
 
+    const handleMusicianDeleted = (musicianId: number) => {
+        // Get musician before removing it
+        const musicianToDelete = musicians.find(m => m.id === musicianId);
+        if (musicianToDelete) {
+            // Delete avatar from storage
+            storageService.deleteAvatar(musicianToDelete.name);
+        }
+
+        // Remove from musicians list
+        setMusicians(prev => prev.filter(m => m.id !== musicianId));
+
+        // Remove from canvas if present
+        setItems(prev => prev.filter(item => item.musician.id !== musicianId));
+
+        // Remove associated lines
+        setLines(prev => prev.filter(line => {
+            const startItem = items.find(i => i.id === line.startItemId);
+            const endItem = items.find(i => i.id === line.endItemId);
+            return !(startItem?.musician.id === musicianId || endItem?.musician.id === musicianId);
+        }));
+    };
+
     useEffect(() => {
         const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
             e.evt.preventDefault();
@@ -474,6 +486,75 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             });
         };
     }, []);
+
+    const handleSave = async (musicianData: Partial<Musician>, imageFile?: File) => {
+        let avatarDataUrl: string | undefined;
+
+        // Handle image file if provided
+        if (imageFile) {
+            avatarDataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.readAsDataURL(imageFile);
+            });
+        }
+
+        // Update musician data
+        const updatedMusician = {
+            ...(editDialog.musician || { id: Date.now() }),
+            ...musicianData,
+            avatar: avatarDataUrl // Add avatar to musician data
+        };
+
+        // Save avatar to storage if we have one
+        if (avatarDataUrl) {
+            storageService.saveAvatar(updatedMusician.name, avatarDataUrl);
+        }
+
+        const updatedMusicians = editDialog.musician
+            ? musicians.map(m => m.id === editDialog.musician?.id ? updatedMusician : m)
+            : [...musicians, updatedMusician];
+
+        // Update storage and state
+        storageService.saveMusicians(updatedMusicians);
+        setMusicians(updatedMusicians);
+
+        // Update canvas items if musician was modified
+        if (editDialog.musician) {
+            setItems(prev => prev.map(item =>
+                item.musician.id === editDialog.musician?.id
+                    ? { ...item, musician: updatedMusician }
+                    : item
+            ));
+        }
+
+        setEditDialog({ isOpen: false, musician: undefined });
+    };
+
+    const handleInstrumentChange = (instrument: string) => {
+        if (!contextMenu.currentItemId) return;
+
+        const updatedItem = items.find(item => item.id === contextMenu.currentItemId);
+        if (!updatedItem) return;
+
+        // Update musician in both items and musicians list
+        const updatedMusician = { ...updatedItem.musician, instrument };
+
+        setItems(prev => prev.map(item =>
+            item.id === contextMenu.currentItemId
+                ? { ...item, musician: updatedMusician }
+                : item
+        ));
+
+        // Update musicians list and storage
+        const updatedMusicians = musicians.map(m =>
+            m.id === updatedMusician.id ? updatedMusician : m
+        );
+        setMusicians(updatedMusicians);
+        storageService.saveMusicians(updatedMusicians);
+
+        setDialogs(prev => ({ ...prev, instrument: false }));
+    };
 
     return (
         <div>
@@ -559,22 +640,19 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                 musicians={musicians}
                 onSelect={handleAddMusiciansToCanvas}
                 currentMusicians={getCurrentMusiciansInCanvas()} // Add this prop
+                onMusicianDeleted={handleMusicianDeleted}
+                instruments={instruments.map(i => i.name)}
+                onEdit={(musician) => setEditDialog({ isOpen: true, musician })}
+                editDialog={editDialog}
+                onEditDialogClose={() => setEditDialog({ isOpen: false, musician: undefined })}
+                onSave={handleSave}
             />
 
             <InstrumentDialog
                 isOpen={dialogs.instrument}
                 instruments={instruments}
                 onClose={() => setDialogs(prev => ({ ...prev, instrument: false }))}
-                onSelect={(instrument) => {
-                    if (contextMenu.currentItemId) {
-                        setItems(prev => prev.map(item =>
-                            item.id === contextMenu.currentItemId
-                                ? { ...item, musician: { ...item.musician, instrument }}
-                                : item
-                        ));
-                    }
-                    setDialogs(prev => ({ ...prev, instrument: false }));
-                }}
+                onSelect={handleInstrumentChange}
             />
         </div>
     );

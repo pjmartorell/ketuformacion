@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import styled from 'styled-components';
-import { Cross2Icon } from '@radix-ui/react-icons';
+import { Cross2Icon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
 import { Musician } from '../../types/types';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { storageService } from '../../services/storage';
+import { MusicianForm } from './MusicianForm';
 
 const StyledOverlay = styled(Dialog.Overlay)`
   position: fixed;
@@ -189,16 +191,172 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   `}
 `;
 
+const ActionButton = styled(Button)`
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: ${({ theme }) => theme.borderRadius.round};
+  background: ${({ theme }) => theme.colors.blue[50]};
+  color: ${({ theme }) => theme.colors.blue[600]};
+  border: 1px solid ${({ theme }) => theme.colors.blue[200]};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.blue[100]};
+    color: ${({ theme }) => theme.colors.blue[700]};
+    border-color: ${({ theme }) => theme.colors.blue[300]};
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+interface DeleteWarningProps {
+  isOpen: boolean;
+  musician: Musician;
+  isInUse: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const DeleteWarning: React.FC<DeleteWarningProps> = ({ isOpen, musician, isInUse, onConfirm, onCancel }) => {
+  if (!isOpen) return null;
+
+  return (
+    <Dialog.Root open={isOpen}>
+      <Dialog.Portal>
+        <StyledOverlay />
+        <StyledContent>
+          <Dialog.Description asChild>
+            <VisuallyHidden>
+              Confirma si deseas eliminar al músico {musician.name}
+            </VisuallyHidden>
+          </Dialog.Description>
+          <HeaderSection>
+            <StyledTitle>Eliminar Músico</StyledTitle>
+            <CloseIcon onClick={onCancel} />
+          </HeaderSection>
+          <DialogBody>
+            <p>¿Estás seguro de que quieres eliminar a {musician.name}?</p>
+            {isInUse && (
+              <WarningMessage>
+                ⚠️ Este músico está presente en el canvas actual.
+                Si continúas, será eliminado de la formación.
+              </WarningMessage>
+            )}
+          </DialogBody>
+          <FooterSection>
+            <Button onClick={onCancel}>Cancelar</Button>
+            <Button variant="primary" onClick={onConfirm}>Confirmar</Button>
+          </FooterSection>
+        </StyledContent>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+};
+
+const WarningMessage = styled.div`
+  margin-top: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.blue[50]};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.blue[700]};
+`;
+
+interface EditDialogProps {
+  isOpen: boolean;
+  musician?: Musician;
+  instruments: string[];
+  onClose: () => void;
+  onSave: (musician: Partial<Musician>, imageFile?: File) => void;
+}
+
+const EditDialog: React.FC<EditDialogProps> = ({ isOpen, musician, instruments, onClose, onSave }) => {
+  if (!isOpen) return null;
+
+  return (
+    <Dialog.Root open={isOpen}>
+      <Dialog.Portal>
+        <StyledOverlay />
+        <StyledContent>
+          <Dialog.Description asChild>
+            <VisuallyHidden>
+              {musician ? `Editar músico ${musician.name}` : 'Añadir nuevo músico'}
+            </VisuallyHidden>
+          </Dialog.Description>
+          <HeaderSection>
+            <StyledTitle>{musician ? 'Editar' : 'Nuevo'} Músico</StyledTitle>
+            <CloseIcon onClick={onClose} />
+          </HeaderSection>
+          <DialogBody>
+            <MusicianForm
+              musician={musician}
+              instruments={instruments || []} // Provide default empty array
+              onSubmit={onSave}
+              id="musician-form"
+            />
+          </DialogBody>
+          <FooterSection>
+            <Button onClick={onClose}>Cancelar</Button>
+            <Button variant="primary" type="submit" form="musician-form">
+              Guardar
+            </Button>
+          </FooterSection>
+        </StyledContent>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+};
+
 interface Props {
     isOpen: boolean;
     onClose: () => void;
     musicians: Musician[];
     onSelect: (musicians: Musician[]) => void;
-    currentMusicians: Musician[]; // Add this prop
+    currentMusicians: Musician[];
+    onMusicianDeleted: (musicianId: number) => void;
+    instruments: string[];
+    onEdit: (musician: Musician) => void;
+    editDialog: { isOpen: boolean; musician?: Musician };
+    onEditDialogClose: () => void;
+    onSave: (musician: Partial<Musician>, imageFile?: File) => void;
 }
 
-export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, onSelect, currentMusicians }) => {
+export const MusicianDialog: React.FC<Props> = ({
+    isOpen,
+    onClose,
+    musicians,
+    onSelect,
+    currentMusicians,
+    onMusicianDeleted,
+    instruments,
+    onEdit,
+    editDialog,
+    onEditDialogClose,
+    onSave
+}) => {
     const [selectedMusicians, setSelectedMusicians] = useState<Musician[]>([]);
+    const [deleteWarning, setDeleteWarning] = useState<{ isOpen: boolean; musician?: Musician, isInUse?: boolean }>({
+        isOpen: false,
+        musician: undefined,
+        isInUse: false,
+    });
 
     useEffect(() => {
         if (isOpen) {
@@ -221,6 +379,24 @@ export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, on
         onClose();
     };
 
+    const handleDelete = async (musician: Musician) => {
+        const isInUse = currentMusicians.some(m => m.id === musician.id);
+        setDeleteWarning({ isOpen: true, musician, isInUse });
+    };
+
+    const handleConfirmDelete = () => {
+        if (deleteWarning.musician) {
+            const updatedMusicians = musicians.filter(m => m.id !== deleteWarning.musician?.id);
+            storageService.saveMusicians(updatedMusicians);
+            onMusicianDeleted(deleteWarning.musician.id);
+            setDeleteWarning({ isOpen: false, musician: undefined, isInUse: false });
+        }
+    };
+
+    const handleEdit = (musician: Musician) => {
+        onEdit(musician);
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -228,6 +404,11 @@ export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, on
             <Dialog.Portal>
                 <StyledOverlay />
                 <StyledContent>
+                    <Dialog.Description asChild>
+                        <VisuallyHidden>
+                            Selecciona los músicos para tu formación. Puedes editar, eliminar o añadir nuevos músicos.
+                        </VisuallyHidden>
+                    </Dialog.Description>
                     <VisuallyHidden>
                         <Dialog.Description>
                             Description goes here
@@ -252,6 +433,14 @@ export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, on
                                     <span>{musician.name}</span>
                                     <small>{musician.instrument}</small>
                                 </MusicianInfo>
+                                <ActionButtons>
+                                    <ActionButton onClick={() => handleEdit(musician)} title="Editar">
+                                        <Pencil1Icon />
+                                    </ActionButton>
+                                    <ActionButton onClick={() => handleDelete(musician)} title="Eliminar">
+                                        <TrashIcon />
+                                    </ActionButton>
+                                  </ActionButtons>
                             </MusicianItem>
                         ))}
                     </DialogBody>
@@ -264,6 +453,20 @@ export const MusicianDialog: React.FC<Props> = ({ isOpen, onClose, musicians, on
                     </FooterSection>
                 </StyledContent>
             </Dialog.Portal>
+            <DeleteWarning
+                isOpen={deleteWarning.isOpen}
+                musician={deleteWarning.musician!}
+                isInUse={deleteWarning.isInUse!}
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setDeleteWarning({ isOpen: false, musician: undefined, isInUse: false })}
+            />
+            <EditDialog
+                isOpen={editDialog.isOpen}
+                musician={editDialog.musician}
+                instruments={instruments}
+                onClose={onEditDialogClose}
+                onSave={onSave}
+            />
         </Dialog.Root>
     );
 };

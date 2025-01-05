@@ -4,6 +4,7 @@ export interface Musician {
     instrument: string;
     x?: number;
     y?: number;
+    avatar?: string;  // Add avatar field to store the data URL
 }
 
 export interface Instrument {
@@ -26,4 +27,10 @@ export interface CanvasItem {
 export interface DialogProps {
     isOpen: boolean;
     onClose: () => void;
+}
+
+export interface MusicianFormData {
+    name: string;
+    instrument: string;
+    imageFile?: File;
 }

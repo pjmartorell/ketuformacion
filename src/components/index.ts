@@ -5,4 +5,6 @@ export { Background } from './Canvas/Background';
 export { HamburgerMenu } from './Menu/HamburgerMenu';
 export { ContextMenu } from './ContextMenu/ContextMenu';
 export { InstrumentDialog } from './Dialog/InstrumentDialog';
+export { MusicianDialog } from './Dialog/MusicianDialog';
+export { MusicianForm } from './Dialog/MusicianForm';
 export { Portal } from './Portal/Portal';

@@ -4,6 +4,7 @@ import { KonvaEventObject } from 'konva/lib/Node';
 import useImage from 'use-image';
 import { Position, Musician } from '../../types/types';
 import { useLongPress } from '../../hooks/useLongPress';
+import { storageService } from '../../services/storage';
 
 interface Props {
     x: number;
@@ -21,14 +22,14 @@ export const CanvasItem: React.FC<Props> = ({
     x,
     y,
     musician,
-    imageUrl,
+    imageUrl: defaultImageUrl,
     onDragMove,
     onDragStart,
     onDragEnd,
     onContextMenu,
     forceHover = false
 }) => {
-    const [image] = useImage(imageUrl);
+    const [image] = useImage(storageService.getAvatar(musician.name) || defaultImageUrl);
     const circleRadius = 40;
     const fontSize = 13;
     const [hover, setHover] = React.useState(false);
