@@ -179,7 +179,6 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         instrument: false
     });
 
-    const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
     const [isExporting, setIsExporting] = useState(false);
 
     const handleZoom = (newScale: number) => {
@@ -323,7 +322,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             tempLayer.add(background);
 
             // Clone all nodes and adjust their positions
-            stage.find('Layer').forEach(layer => {
+            stage?.find('Layer').forEach(layer => {
                 (layer as Konva.Layer).getChildren().forEach(child => {
                     if ((child as Konva.Shape).name() !== 'background') { // Skip original background
                         const clone = child.clone();
@@ -397,15 +396,12 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         const selectedMusicianIds = selectedMusicians.map(m => m.id);
         const itemsIds = items.map(item => item.musician.id);
 
-        const intersection = selectedMusicianIds.filter(id => itemsIds.includes(id));
-        const complementary = [
-            ...selectedMusicianIds.filter(id => !itemsIds.includes(id)),
-            ...itemsIds.filter(id => !selectedMusicianIds.includes(id))
-        ];
+        // Keep existing items that are still selected
+        const existingItems = items.filter(item => selectedMusicianIds.includes(item.musician.id));
 
-        const existingMusicians = items.filter(item => intersection.includes(item.musician.id));
+        // Only create new items for newly selected musicians
         const newMusicians = selectedMusicians
-            .filter(m => complementary.includes(m.id))
+            .filter(m => !itemsIds.includes(m.id))
             .map(musician => ({
                 id: musician.id,
                 x: Math.random() * 400 + 100, // Random position between 100 and 500
@@ -416,12 +412,13 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         const existingMaster = items.find(m => m.id === firstItemId);
         const newItems = [
             existingMaster,
-            ...existingMusicians,
+            ...existingItems.filter(item => item.id !== firstItemId), // Exclude master from existing items
             ...newMusicians
         ].filter(Boolean) as CanvasItemType[];
 
         setItems(newItems);
 
+        // Only add lines for new musicians
         newMusicians.forEach(item => {
             addLineConnection(item.id);
         });
@@ -532,7 +529,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                     ))}
                     {items.map(item => (
                         <CanvasItem
-                            key={`item-${item.id}-${item.musician.id}`}
+                            key={`item-${item.id}`} // Change the key to only use item.id
                             forceHover={isExporting}
                             x={item.x || 100}
                             y={item.y || 100}
