@@ -80,6 +80,12 @@ export const theme = {
   gradients: {
     primary: `linear-gradient(135deg, ${ketuColors.blue[400]} 0%, ${ketuColors.blue[600]} 100%)`,
     secondary: `linear-gradient(135deg, ${ketuColors.blue[500]} 0%, ${ketuColors.blue[700]} 100%)`,
+  },
+  keyframes: {
+    slideDownAndFade: {
+      from: { opacity: 0, transform: 'translateY(-2px)' },
+      to: { opacity: 1, transform: 'translateY(0)' }
+    }
   }
 };
 

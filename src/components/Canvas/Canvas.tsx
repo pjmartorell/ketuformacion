@@ -25,6 +25,8 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { autosaveStorage } from '../../services/autosaveStorage';
 import { HistoryManager, HistoryState } from '../../utils/historyManager';
 import { ResetIcon, CommitIcon } from '@radix-ui/react-icons';
+import { Toolbar } from '../Toolbar';
+import * as Tooltip from '@radix-ui/react-tooltip';
 
 interface CanvasProps {
     initialMusicians?: Musician[];
@@ -35,84 +37,6 @@ interface ContextMenuState {
     position: Position;
     currentItemId: number | null;
 }
-
-const Toolbar = styled.div`
-  position: fixed;
-  bottom: ${({ theme }) => theme.spacing.lg};
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  padding: ${({ theme }) => theme.spacing.xs};
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
-  border: 1px solid ${({ theme }) => theme.colors.blue[200]};
-  z-index: 1000;
-`;
-
-const ToolbarGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.xs};
-
-  &:not(:last-child) {
-    border-right: 1px solid ${({ theme }) => theme.colors.blue[200]};
-    margin-right: ${({ theme }) => theme.spacing.xs};
-  }
-`;
-
-const ZoomButton = styled.button`
-  background: ${({ theme }) => theme.gradients.primary};
-  color: ${({ theme }) => theme.colors.white[500]};
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: ${({ theme }) => theme.borderRadius.round};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: ${({ theme }) => theme.shadows.sm};
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadows.md};
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-`;
-
-const UndoButton = styled(ZoomButton)<{ disabled?: boolean }>`
-    opacity: ${props => props.disabled ? 0.5 : 1};
-    cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
-    pointer-events: ${props => props.disabled ? 'none' : 'auto'};
-`;
-
-const RedoButton = styled(UndoButton)``;
-
-// Rename the icons for clarity
-const UndoIcon = ResetIcon;
-const RedoIcon = styled(ResetIcon)`
-    transform: scaleX(-1);
-`;
-
-const ToggleButton = styled(ZoomButton)<{ active: boolean }>`
-  background: ${({ active, theme }) =>
-    active ? theme.gradients.primary : theme.colors.white[300]};
-  color: ${({ active, theme }) =>
-    active ? theme.colors.white[500] : theme.colors.blue[900]};
-
-  &:hover {
-    background: ${({ active, theme }) =>
-      active ? theme.gradients.primary : theme.colors.blue[100]};
-  }
-`;
 
 export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     const master: CanvasItemType = {
@@ -734,7 +658,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                 throw new Error('Operación cancelada');
             }
             // If overwriting, use the existing design's ID
-            saveDesign(name, existingId);
+            saveDesign(name, existingDesign.id);
         } else {
             // If new name, create with new ID
             saveDesign(name);
@@ -887,42 +811,31 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         handleRedo();
     }, [handleRedo]);
 
+    // Add keyboard shortcuts for common actions
+    useHotkeys('a', () => setDialogs(prev => ({ ...prev, addMusician: true })), []);
+    useHotkeys('l', () => setShowLines(!showLines), [showLines]);
+    useHotkeys('d', () => setIsDesignsDialogOpen(true), []);
+    useHotkeys('e', handleExportCanvas, []);
+    useHotkeys('+', () => handleZoom(Math.min(scale * 1.1, 2.6)), [scale]);
+    useHotkeys('-', () => handleZoom(Math.max(scale * 0.9, 0.3)), [scale]);
+
     return (
         <div>
-            <Toolbar>
-                <ToolbarGroup>
-                    <HamburgerMenu
-                        onMenuItemClick={() => setDialogs(prev => ({ ...prev, addMusician: true }))}
-                        onExportCanvas={handleExportCanvas}
-                        onDesignsClick={() => setIsDesignsDialogOpen(true)}
-                    />
-                </ToolbarGroup>
-                <ToolbarGroup>
-                    <ZoomButton onClick={() => handleZoom(Math.min(scale * 1.1, 2.6))} title="Zoom in">
-                        <FaSearchPlus size={16} />
-                    </ZoomButton>
-                    <ZoomButton onClick={() => handleZoom(Math.max(scale * 0.9, 0.3))} title="Zoom out">
-                        <FaSearchMinus size={16} />
-                    </ZoomButton>
-                </ToolbarGroup>
-                <ToolbarGroup>
-                    <UndoButton disabled={!canUndo} onClick={handleUndo} title="Deshacer (Ctrl+Z)">
-                        <UndoIcon />
-                    </UndoButton>
-                    <RedoButton disabled={!canRedo} onClick={handleRedo} title="Rehacer (Ctrl+Shift+Z)">
-                        <RedoIcon />
-                    </RedoButton>
-                </ToolbarGroup>
-                <ToolbarGroup>
-                    <ToggleButton
-                        active={showLines}
-                        onClick={() => setShowLines(!showLines)}
-                        title="Mostrar/ocultar líneas"
-                    >
-                        <CommitIcon />
-                    </ToggleButton>
-                </ToolbarGroup>
-            </Toolbar>
+            <Tooltip.Provider>
+                <Toolbar
+                    onZoomIn={() => handleZoom(Math.min(scale * 1.1, 2.6))}
+                    onZoomOut={() => handleZoom(Math.max(scale * 0.9, 0.3))}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    onToggleLines={() => setShowLines(!showLines)}
+                    onAddMusician={() => setDialogs(prev => ({ ...prev, addMusician: true }))}
+                    onExportCanvas={handleExportCanvas}
+                    onOpenDesigns={() => setIsDesignsDialogOpen(true)}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    showLines={showLines}
+                />
+            </Tooltip.Provider>
 
             <Stage
                 width={window.innerWidth/0.3}
