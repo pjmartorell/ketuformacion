@@ -1,105 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import styled from 'styled-components';
 import { Cross2Icon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
-import { Musician } from '../../types/types';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import styled from 'styled-components';
+import {
+  DialogOverlay,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogSubtitle,
+  DialogBody,
+  DialogFooter,
+  DialogButton,
+  CloseButton
+} from './Dialog.styles';
+import { Musician } from '../../types/types';
 import { storageService } from '../../services/storage';
 import { MusicianForm } from './MusicianForm';
-
-const StyledOverlay = styled(Dialog.Overlay)`
-  position: fixed;
-  inset: 0;
-  background: ${({ theme }) => theme.colors.blackA8};
-  animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1100; // Higher than toolbar
-`;
-
-const StyledContent = styled(Dialog.Content)`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90vw;
-  max-width: 500px;
-  background: linear-gradient(to bottom, ${({ theme }) => theme.colors.blue[50]}, white);
-  border-radius: ${({ theme }) => theme.borderRadius.xl};
-  box-shadow: ${({ theme }) => theme.shadows.lg},
-              0 0 0 1px rgba(0, 0, 0, 0.05),
-              0 30px 60px -12px rgba(0, 0, 0, 0.15);
-  padding: 0;
-  overflow: hidden;
-  z-index: 1100; // Higher than toolbar
-`;
-
-const HeaderSection = styled.div`
-  padding: ${({ theme }) => theme.spacing.xl};
-  background: ${({ theme }) => theme.gradients.primary};
-  color: white;
-  position: relative;
-`;
-
-const StyledTitle = styled(Dialog.Title)`
-  font-size: 2rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-`;
-
-const Subtitle = styled.p`
-  color: ${({ theme }) => theme.colors.blue[100]};
-  font-size: 1.1rem;
-  max-width: 80%;
-`;
-
-const CloseIcon = styled(Cross2Icon)`
-  position: absolute;
-  top: ${({ theme }) => theme.spacing.md};
-  right: ${({ theme }) => theme.spacing.md};
-  width: 20px;
-  height: 20px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  opacity: 0.8;
-
-  &:hover {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-`;
-
-const DialogBody = styled.div`
-  padding: ${({ theme }) => theme.spacing.xl};
-  max-height: 60vh;
-  overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: ${({ theme }) => theme.colors.blue[50]};
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.colors.blue[200]};
-    border-radius: 4px;
-  }
-`;
 
 const MusicianItem = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.colors.white[500]};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   transition: all 0.2s ease;
-  cursor: pointer;
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+  border: 1px solid ${({ theme }) => theme.colors.blue[100]};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.blue[50]};
+    transform: translateY(-1px);
+    border-color: ${({ theme }) => theme.colors.blue[300]};
+    box-shadow: ${({ theme }) => theme.shadows.sm};
   }
 `;
 
@@ -155,43 +88,7 @@ const MusicianInfo = styled.div`
   }
 `;
 
-const FooterSection = styled.div`
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
-  background: ${({ theme }) => theme.colors.white[100]};
-  border-top: 1px solid ${({ theme }) => theme.colors.blue[100]};
-  display: flex;
-  justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.xl};
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  ${({ theme, variant = 'secondary' }) =>
-    variant === 'primary'
-      ? `
-    background: ${theme.gradients.primary};
-    color: white;
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: ${theme.shadows.md};
-    }
-  `
-      : `
-    background: ${theme.colors.white[300]};
-    color: ${theme.colors.blue[900]};
-    &:hover {
-      background: ${theme.colors.white[400]};
-    }
-  `}
-`;
-
-const ActionButton = styled(Button)`
+const ActionButton = styled(DialogButton)`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   font-size: 0.9rem;
   display: flex;
@@ -241,17 +138,19 @@ const DeleteWarning: React.FC<DeleteWarningProps> = ({ isOpen, musician, isInUse
   return (
     <Dialog.Root open={isOpen}>
       <Dialog.Portal>
-        <StyledOverlay />
-        <StyledContent>
-          <Dialog.Description asChild>
-            <VisuallyHidden>
+        <DialogOverlay />
+        <DialogContent>
+          <VisuallyHidden>
+            <Dialog.Description>
               Confirma si deseas eliminar al músico {musician.name}
-            </VisuallyHidden>
-          </Dialog.Description>
-          <HeaderSection>
-            <StyledTitle>Eliminar Músico</StyledTitle>
-            <CloseIcon onClick={onCancel} />
-          </HeaderSection>
+            </Dialog.Description>
+          </VisuallyHidden>
+          <DialogHeader>
+            <DialogTitle>Eliminar Músico</DialogTitle>
+            <CloseButton onClick={onCancel}>
+              <Cross2Icon />
+            </CloseButton>
+          </DialogHeader>
           <DialogBody>
             <p>¿Estás seguro de que quieres eliminar a {musician.name}?</p>
             {isInUse && (
@@ -261,11 +160,11 @@ const DeleteWarning: React.FC<DeleteWarningProps> = ({ isOpen, musician, isInUse
               </WarningMessage>
             )}
           </DialogBody>
-          <FooterSection>
-            <Button onClick={onCancel}>Cancelar</Button>
-            <Button variant="primary" onClick={onConfirm}>Confirmar</Button>
-          </FooterSection>
-        </StyledContent>
+          <DialogFooter>
+            <DialogButton onClick={onCancel}>Cancelar</DialogButton>
+            <DialogButton variant="primary" onClick={onConfirm}>Confirmar</DialogButton>
+          </DialogFooter>
+        </DialogContent>
       </Dialog.Portal>
     </Dialog.Root>
   );
@@ -293,17 +192,19 @@ const EditDialog: React.FC<EditDialogProps> = ({ isOpen, musician, instruments, 
   return (
     <Dialog.Root open={isOpen}>
       <Dialog.Portal>
-        <StyledOverlay />
-        <StyledContent>
-          <Dialog.Description asChild>
-            <VisuallyHidden>
+        <DialogOverlay />
+        <DialogContent>
+          <VisuallyHidden>
+            <Dialog.Description>
               {musician ? `Editar músico ${musician.name}` : 'Añadir nuevo músico'}
-            </VisuallyHidden>
-          </Dialog.Description>
-          <HeaderSection>
-            <StyledTitle>{musician ? 'Editar' : 'Nuevo'} Músico</StyledTitle>
-            <CloseIcon onClick={onClose} />
-          </HeaderSection>
+            </Dialog.Description>
+          </VisuallyHidden>
+          <DialogHeader>
+            <DialogTitle>{musician ? 'Editar' : 'Nuevo'} Músico</DialogTitle>
+            <CloseButton onClick={onClose}>
+              <Cross2Icon />
+            </CloseButton>
+          </DialogHeader>
           <DialogBody>
             <MusicianForm
               musician={musician}
@@ -312,161 +213,158 @@ const EditDialog: React.FC<EditDialogProps> = ({ isOpen, musician, instruments, 
               id="musician-form"
             />
           </DialogBody>
-          <FooterSection>
-            <Button onClick={onClose}>Cancelar</Button>
-            <Button variant="primary" type="submit" form="musician-form">
+          <DialogFooter>
+            <DialogButton onClick={onClose}>Cancelar</DialogButton>
+            <DialogButton variant="primary" type="submit" form="musician-form">
               Guardar
-            </Button>
-          </FooterSection>
-        </StyledContent>
+            </DialogButton>
+          </DialogFooter>
+        </DialogContent>
       </Dialog.Portal>
     </Dialog.Root>
   );
 };
 
 interface Props {
-    isOpen: boolean;
-    onClose: () => void;
-    musicians: Musician[];
-    onSelect: (musicians: Musician[]) => void;
-    currentMusicians: Musician[];
-    onMusicianDeleted: (musicianId: number) => void;
-    instruments: string[];
-    onEdit: (musician: Musician) => void;
-    editDialog: { isOpen: boolean; musician?: Musician };
-    onEditDialogClose: () => void;
-    onSave: (musician: Partial<Musician>, imageFile?: File) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  musicians: Musician[];
+  onSelect: (musicians: Musician[]) => void;
+  currentMusicians: Musician[];
+  onMusicianDeleted: (musicianId: number) => void;
+  instruments: string[];
+  onEdit: (musician: Musician) => void;
+  editDialog: { isOpen: boolean; musician?: Musician };
+  onEditDialogClose: () => void;
+  onSave: (musician: Partial<Musician>, imageFile?: File) => void;
 }
 
 export const MusicianDialog: React.FC<Props> = ({
-    isOpen,
-    onClose,
-    musicians,
-    onSelect,
-    currentMusicians,
-    onMusicianDeleted,
-    instruments,
-    onEdit,
-    editDialog,
-    onEditDialogClose,
-    onSave
+  isOpen,
+  onClose,
+  musicians,
+  onSelect,
+  currentMusicians,
+  onMusicianDeleted,
+  instruments,
+  onEdit,
+  editDialog,
+  onEditDialogClose,
+  onSave
 }) => {
-    const [selectedMusicians, setSelectedMusicians] = useState<Musician[]>([]);
-    const [deleteWarning, setDeleteWarning] = useState<{ isOpen: boolean; musician?: Musician, isInUse?: boolean }>({
-        isOpen: false,
-        musician: undefined,
-        isInUse: false,
+  const [selectedMusicians, setSelectedMusicians] = useState<Musician[]>([]);
+  const [deleteWarning, setDeleteWarning] = useState<{ isOpen: boolean; musician?: Musician, isInUse?: boolean }>({
+    isOpen: false,
+    musician: undefined,
+    isInUse: false,
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedMusicians(currentMusicians);
+    }
+  }, [isOpen, currentMusicians]);
+
+  const handleSelectMusician = (musician: Musician) => {
+    setSelectedMusicians(prev => {
+      const isSelected = prev.some(m => m.id === musician.id);
+      if (isSelected) {
+        return prev.filter(m => m.id !== musician.id);
+      }
+      return [...prev, musician];
     });
+  };
 
-    useEffect(() => {
-        if (isOpen) {
-            setSelectedMusicians(currentMusicians);
-        }
-    }, [isOpen, currentMusicians]);
+  const handleConfirm = () => {
+    onSelect(selectedMusicians);
+    onClose();
+  };
 
-    const handleSelectMusician = (musician: Musician) => {
-        setSelectedMusicians(prev => {
-            const isSelected = prev.some(m => m.id === musician.id);
-            if (isSelected) {
-                return prev.filter(m => m.id !== musician.id);
-            }
-            return [...prev, musician];
-        });
-    };
+  const handleDelete = async (musician: Musician) => {
+    const isInUse = currentMusicians.some(m => m.id === musician.id);
+    setDeleteWarning({ isOpen: true, musician, isInUse });
+  };
 
-    const handleConfirm = () => {
-        onSelect(selectedMusicians);
-        onClose();
-    };
+  const handleConfirmDelete = () => {
+    if (deleteWarning.musician) {
+      const updatedMusicians = musicians.filter(m => m.id !== deleteWarning.musician?.id);
+      storageService.saveMusicians(updatedMusicians);
+      onMusicianDeleted(deleteWarning.musician.id);
+      setDeleteWarning({ isOpen: false, musician: undefined, isInUse: false });
+    }
+  };
 
-    const handleDelete = async (musician: Musician) => {
-        const isInUse = currentMusicians.some(m => m.id === musician.id);
-        setDeleteWarning({ isOpen: true, musician, isInUse });
-    };
+  const handleEdit = (musician: Musician) => {
+    onEdit(musician);
+  };
 
-    const handleConfirmDelete = () => {
-        if (deleteWarning.musician) {
-            const updatedMusicians = musicians.filter(m => m.id !== deleteWarning.musician?.id);
-            storageService.saveMusicians(updatedMusicians);
-            onMusicianDeleted(deleteWarning.musician.id);
-            setDeleteWarning({ isOpen: false, musician: undefined, isInUse: false });
-        }
-    };
+  if (!isOpen) return null;
 
-    const handleEdit = (musician: Musician) => {
-        onEdit(musician);
-    };
+  return (
+    <Dialog.Root open={isOpen}>
+      <Dialog.Portal>
+        <DialogOverlay />
+        <DialogContent>
+          <VisuallyHidden>
+            <Dialog.Description>
+              Selecciona los músicos para tu formación. Puedes editar, eliminar o añadir nuevos músicos.
+            </Dialog.Description>
+          </VisuallyHidden>
+          <DialogHeader>
+            <DialogTitle>Seleccionar Percusionistas</DialogTitle>
+            <DialogSubtitle>Elige los integrantes para tu formación</DialogSubtitle>
+            <CloseButton onClick={onClose}>
+              <Cross2Icon />
+            </CloseButton>
+          </DialogHeader>
 
-    if (!isOpen) return null;
+          <DialogBody>
+            {musicians.map((musician) => (
+              <MusicianItem key={musician.id}>
+                <CheckboxInput
+                  type="checkbox"
+                  checked={selectedMusicians.some(m => m.id === musician.id)}
+                  onChange={() => handleSelectMusician(musician)}
+                  tabIndex={-1}
+                />
+                <MusicianInfo>
+                  <span>{musician.name}</span>
+                  <small>{musician.instrument}</small>
+                </MusicianInfo>
+                <ActionButtons>
+                  <ActionButton onClick={() => handleEdit(musician)} title="Editar">
+                    <Pencil1Icon />
+                  </ActionButton>
+                  <ActionButton onClick={() => handleDelete(musician)} title="Eliminar">
+                    <TrashIcon />
+                  </ActionButton>
+                </ActionButtons>
+              </MusicianItem>
+            ))}
+          </DialogBody>
 
-    return (
-        <Dialog.Root open={isOpen}>
-            <Dialog.Portal>
-                <StyledOverlay />
-                <StyledContent>
-                    <Dialog.Description asChild>
-                        <VisuallyHidden>
-                            Selecciona los músicos para tu formación. Puedes editar, eliminar o añadir nuevos músicos.
-                        </VisuallyHidden>
-                    </Dialog.Description>
-                    <VisuallyHidden>
-                        <Dialog.Description>
-                            Description goes here
-                        </Dialog.Description>
-                    </VisuallyHidden>
-                    <HeaderSection>
-                        <StyledTitle>Seleccionar Percusionistas</StyledTitle>
-                        <Subtitle>Elige los integrantes para tu formación</Subtitle>
-                        <CloseIcon onClick={onClose} />
-                    </HeaderSection>
-
-                    <DialogBody>
-                        {musicians.map((musician) => (
-                            <MusicianItem key={musician.id}>
-                                <CheckboxInput
-                                    type="checkbox"
-                                    checked={selectedMusicians.some(m => m.id === musician.id)}
-                                    onChange={() => handleSelectMusician(musician)}
-                                    tabIndex={-1}
-                                />
-                                <MusicianInfo>
-                                    <span>{musician.name}</span>
-                                    <small>{musician.instrument}</small>
-                                </MusicianInfo>
-                                <ActionButtons>
-                                    <ActionButton onClick={() => handleEdit(musician)} title="Editar">
-                                        <Pencil1Icon />
-                                    </ActionButton>
-                                    <ActionButton onClick={() => handleDelete(musician)} title="Eliminar">
-                                        <TrashIcon />
-                                    </ActionButton>
-                                  </ActionButtons>
-                            </MusicianItem>
-                        ))}
-                    </DialogBody>
-
-                    <FooterSection>
-                        <Button onClick={onClose}>Cancelar</Button>
-                        <Button variant="primary" onClick={handleConfirm}>
-                            Confirmar
-                        </Button>
-                    </FooterSection>
-                </StyledContent>
-            </Dialog.Portal>
-            <DeleteWarning
-                isOpen={deleteWarning.isOpen}
-                musician={deleteWarning.musician!}
-                isInUse={deleteWarning.isInUse!}
-                onConfirm={handleConfirmDelete}
-                onCancel={() => setDeleteWarning({ isOpen: false, musician: undefined, isInUse: false })}
-            />
-            <EditDialog
-                isOpen={editDialog.isOpen}
-                musician={editDialog.musician}
-                instruments={instruments}
-                onClose={onEditDialogClose}
-                onSave={onSave}
-            />
-        </Dialog.Root>
-    );
+          <DialogFooter>
+            <DialogButton onClick={onClose}>Cancelar</DialogButton>
+            <DialogButton variant="primary" onClick={handleConfirm}>
+              Confirmar
+            </DialogButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog.Portal>
+      <DeleteWarning
+        isOpen={deleteWarning.isOpen}
+        musician={deleteWarning.musician!}
+        isInUse={deleteWarning.isInUse!}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteWarning({ isOpen: false, musician: undefined, isInUse: false })}
+      />
+      <EditDialog
+        isOpen={editDialog.isOpen}
+        musician={editDialog.musician}
+        instruments={instruments}
+        onClose={onEditDialogClose}
+        onSave={onSave}
+      />
+    </Dialog.Root>
+  );
 };

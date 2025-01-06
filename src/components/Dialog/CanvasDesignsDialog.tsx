@@ -5,6 +5,16 @@ import { Cross2Icon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { CanvasDesign } from '../../types/types';
 import { useToast } from '../../context/ToastContext';
+import {
+  DialogOverlay,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogFooter,
+  DialogButton,
+  CloseButton
+} from './Dialog.styles';
 
 const StyledOverlay = styled(Dialog.Overlay)`
   position: fixed;
@@ -60,7 +70,7 @@ const CloseIcon = styled(Cross2Icon)`
   }
 `;
 
-const DialogBody = styled.div`
+const StyledDialogBody = styled.div`
   padding: ${({ theme }) => theme.spacing.xl};
 `;
 
@@ -271,7 +281,7 @@ export const CanvasDesignsDialog: React.FC<Props> = ({
                         <CloseIcon onClick={onClose} />
                     </HeaderSection>
 
-                    <DialogBody>
+                    <StyledDialogBody>
                         <SaveSection>
                             <Input
                                 type="text"
@@ -310,7 +320,7 @@ export const CanvasDesignsDialog: React.FC<Props> = ({
                                 </DesignItem>
                             ))}
                         </DesignsList>
-                    </DialogBody>
+                    </StyledDialogBody>
                 </StyledContent>
             </Dialog.Portal>
         </Dialog.Root>
