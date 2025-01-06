@@ -24,7 +24,7 @@ import { areCanvasStatesEqual } from '../../utils/compareUtils';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { autosaveStorage } from '../../services/autosaveStorage';
 import { HistoryManager, HistoryState } from '../../utils/historyManager';
-import { ResetIcon } from '@radix-ui/react-icons';
+import { ResetIcon, CommitIcon } from '@radix-ui/react-icons';
 
 interface CanvasProps {
     initialMusicians?: Musician[];
@@ -43,14 +43,13 @@ const Toolbar = styled.div`
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.xs};
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   border-radius: ${({ theme }) => theme.borderRadius.xl};
   box-shadow: ${({ theme }) => theme.shadows.lg};
   border: 1px solid ${({ theme }) => theme.colors.blue[200]};
-  z-index: 1000; // Lower than dialog
+  z-index: 1000;
 `;
 
 const ToolbarGroup = styled.div`
@@ -60,8 +59,8 @@ const ToolbarGroup = styled.div`
   padding: ${({ theme }) => theme.spacing.xs};
 
   &:not(:last-child) {
-    border-right: 2px solid ${({ theme }) => theme.colors.blue[200]};
-    padding-right: ${({ theme }) => theme.spacing.sm};
+    border-right: 1px solid ${({ theme }) => theme.colors.blue[200]};
+    margin-right: ${({ theme }) => theme.spacing.xs};
   }
 `;
 
@@ -103,47 +102,15 @@ const RedoIcon = styled(ResetIcon)`
     transform: scaleX(-1);
 `;
 
-const LinesToggle = styled.label`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  cursor: pointer;
-  user-select: none;
-  color: ${({ theme }) => theme.colors.blue[900]};
-  font-weight: 500;
-  padding: ${({ theme }) => theme.spacing.xs}; // Added padding to match other groups
+const ToggleButton = styled(ZoomButton)<{ active: boolean }>`
+  background: ${({ active, theme }) =>
+    active ? theme.gradients.primary : theme.colors.white[300]};
+  color: ${({ active, theme }) =>
+    active ? theme.colors.white[500] : theme.colors.blue[900]};
 
-  input {
-    appearance: none;
-    width: 40px;
-    height: 20px;
-    background: ${({ theme }) => theme.colors.white[300]};
-    border-radius: 20px;
-    position: relative;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: inset 0 1px 2px ${({ theme }) => theme.colors.blackA5};
-
-    &:checked {
-      background: ${({ theme }) => theme.colors.blue[500]};
-    }
-
-    &:before {
-      content: '';
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      top: 2px;
-      left: 2px;
-      background: white;
-      transition: transform 0.2s ease;
-      box-shadow: ${({ theme }) => theme.shadows.sm};
-    }
-
-    &:checked:before {
-      transform: translateX(20px);
-    }
+  &:hover {
+    background: ${({ active, theme }) =>
+      active ? theme.gradients.primary : theme.colors.blue[100]};
   }
 `;
 
@@ -422,6 +389,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     };
 
     const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+        setIsDragging(false);
         e.target.to({
             duration: 0.5,
             easing: Konva.Easings.ElasticEaseOut,
@@ -431,11 +399,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             shadowOffsetY: 5
         });
 
-        // Set isDragging to false before recording history
-        setIsDragging(false);
-
         // Record history after drag ends
-        isHistoryAction.current = true; // Prevent the effect from recording this change
         const currentState: HistoryState = { items, lines, scale };
         historyManager.current.push(currentState);
         setCanUndo(historyManager.current.canUndo());
@@ -770,7 +734,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                 throw new Error('Operación cancelada');
             }
             // If overwriting, use the existing design's ID
-            saveDesign(name, existingDesign.id);
+            saveDesign(name, existingId);
         } else {
             // If new name, create with new ID
             saveDesign(name);
@@ -869,17 +833,16 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         return () => clearInterval(interval);
     }, [items, lines, scale, hasUnsavedChanges]);
 
-    // Modify the history effect to ignore changes when isDragging is being set to false
+    // Modify the history effect to only track non-drag changes
     useEffect(() => {
         if (!isHistoryAction.current && !isDragging) {
-            // Only record if it's not from a drag operation completion
             const currentState: HistoryState = { items, lines, scale };
             historyManager.current.push(currentState);
             setCanUndo(historyManager.current.canUndo());
             setCanRedo(historyManager.current.canRedo());
         }
         isHistoryAction.current = false;
-    }, [items, lines, scale]);
+    }, [items, lines, scale, isDragging]);
 
     const handleUndo = () => {
         const previousState = historyManager.current.undo();
@@ -934,7 +897,6 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                         onDesignsClick={() => setIsDesignsDialogOpen(true)}
                     />
                 </ToolbarGroup>
-
                 <ToolbarGroup>
                     <ZoomButton onClick={() => handleZoom(Math.min(scale * 1.1, 2.6))} title="Zoom in">
                         <FaSearchPlus size={16} />
@@ -943,7 +905,6 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                         <FaSearchMinus size={16} />
                     </ZoomButton>
                 </ToolbarGroup>
-
                 <ToolbarGroup>
                     <UndoButton disabled={!canUndo} onClick={handleUndo} title="Deshacer (Ctrl+Z)">
                         <UndoIcon />
@@ -952,16 +913,14 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                         <RedoIcon />
                     </RedoButton>
                 </ToolbarGroup>
-
                 <ToolbarGroup>
-                    <LinesToggle>
-                        <input
-                            type="checkbox"
-                            checked={showLines}
-                            onChange={() => setShowLines(!showLines)}
-                        />
-                        <span>Mostrar líneas</span>
-                    </LinesToggle>
+                    <ToggleButton
+                        active={showLines}
+                        onClick={() => setShowLines(!showLines)}
+                        title="Mostrar/ocultar líneas"
+                    >
+                        <CommitIcon />
+                    </ToggleButton>
                 </ToolbarGroup>
             </Toolbar>
 
