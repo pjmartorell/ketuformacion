@@ -1,4 +1,5 @@
 import { Musician } from '../types/types';
+import { MASTER_MUSICIAN, isSpecialMusician } from '../constants/musicians';
 
 const STORAGE_KEYS = {
   MUSICIANS: 'ketu-musicians',
@@ -39,11 +40,19 @@ export const storageService = {
 
   getMusicians: (): Musician[] => {
     const data = localStorage.getItem(STORAGE_KEYS.MUSICIANS);
-    return data ? JSON.parse(data) : [];
+    const storedMusicians = data ? JSON.parse(data) : [];
+    // Always ensure MASTER_MUSICIAN is present
+    if (!storedMusicians.some(m => m.id === MASTER_MUSICIAN.id)) {
+      return [MASTER_MUSICIAN, ...storedMusicians];
+    }
+    return storedMusicians;
   },
 
   saveMusicians: (musicians: Musician[]) => {
-    localStorage.setItem(STORAGE_KEYS.MUSICIANS, JSON.stringify(musicians));
+    // Ensure MASTER_MUSICIAN cannot be removed
+    const masterExists = musicians.some(m => m.id === MASTER_MUSICIAN.id);
+    const musiciansToSave = masterExists ? musicians : [MASTER_MUSICIAN, ...musicians];
+    localStorage.setItem(STORAGE_KEYS.MUSICIANS, JSON.stringify(musiciansToSave));
   },
 
   getAvatar: (name: string): string | null => {

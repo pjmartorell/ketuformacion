@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import styled from 'styled-components';
 import { Cross2Icon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { CanvasDesign } from '../../types/types';
 import { useToast } from '../../context/ToastContext';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const StyledOverlay = styled(Dialog.Overlay)`
   position: fixed;
@@ -233,13 +233,18 @@ export const CanvasDesignsDialog: React.FC<Props> = ({
             return;
         }
 
-        onSave(newDesignName);
-        setNewDesignName('');
-        showToast({
-            title: 'Éxito',
-            description: 'Diseño guardado correctamente',
-            type: 'success'
-        });
+        try {
+            onSave(newDesignName);
+            setNewDesignName('');
+            showToast({
+                title: 'Éxito',
+                description: 'Diseño guardado correctamente',
+                type: 'success'
+            });
+        } catch (error) {
+            // If onSave throws an error (like empty design validation), we don't show success toast
+            return;
+        }
     };
 
     const formatDate = (timestamp: number) => {

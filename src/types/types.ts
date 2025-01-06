@@ -4,7 +4,7 @@ export interface Musician {
     instrument: string;
     x?: number;
     y?: number;
-    avatar?: string;  // Add avatar field to store the data URL
+    avatar?: string;
 }
 
 export interface Instrument {
@@ -44,6 +44,10 @@ export interface CanvasDesign {
     lines: CanvasLine[];
     scale: number;
     position: Position;
+    windowSize: {
+        width: number;
+        height: number;
+    };
 }
 
 export interface CanvasLine {

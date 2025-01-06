@@ -18,6 +18,9 @@ import { storageService } from '../../services/storage';
 import { resizeImage } from '../../utils/imageUtils';
 import { canvasStorage } from '../../services/canvasStorage';
 import { CanvasDesignsDialog } from '../Dialog/CanvasDesignsDialog';
+import { useToast } from '../../context/ToastContext';
+import { MASTER_MUSICIAN, isSpecialMusician } from '../../constants/musicians';
+import { areCanvasStatesEqual } from '../../utils/compareUtils';
 
 interface CanvasProps {
     initialMusicians?: Musician[];
@@ -128,10 +131,10 @@ const LinesToggle = styled.label`
 
 export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     const master: CanvasItemType = {
-        id: 1,
+        id: MASTER_MUSICIAN.id,
         x: 100,
         y: 100,
-        musician: { id: 1, name: 'Alex', instrument: 'R' }
+        musician: MASTER_MUSICIAN
     };
     const stageRef = useRef<Konva.Stage>(null);
     const [scale, setScale] = useState<number>(1);
@@ -171,6 +174,8 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     const [designs, setDesigns] = useState<CanvasDesign[]>([]);
     const [currentDesign, setCurrentDesign] = useState<CanvasDesign>();
     const [isDesignsDialogOpen, setIsDesignsDialogOpen] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const { showToast } = useToast();
 
     useEffect(() => {
         storageService.initializeIfNeeded();
@@ -246,6 +251,15 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         if (!contextMenu.currentItemId) return;
 
         if (option === 'delete_player') {
+            const itemToDelete = items.find(item => item.id === contextMenu.currentItemId);
+            if (itemToDelete && isSpecialMusician(itemToDelete.musician.id)) {
+                showToast({
+                    title: 'Acción no permitida',
+                    description: 'El director no puede ser eliminado.',
+                    type: 'error'
+                });
+                return;
+            }
             setItems(prev => prev.filter(item => item.id !== contextMenu.currentItemId));
             setLines(prev => prev.filter(line =>
                 line.startItemId !== contextMenu.currentItemId &&
@@ -431,6 +445,29 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     };
 
     const handleMusicianDeleted = (musicianId: number) => {
+        // Prevent deletion of master musician
+        if (isSpecialMusician(musicianId)) {
+            showToast({
+                title: 'Acción no permitida',
+                description: 'El director no puede ser eliminado.',
+                type: 'error'
+            });
+            return;
+        }
+
+        // Check if musician exists in any saved designs
+        const affectedDesigns = designs.filter(design =>
+            design.items.some(item => item.musician.id === musicianId)
+        );
+
+        if (affectedDesigns.length > 0) {
+            showToast({
+                title: 'Advertencia',
+                description: `Este músico aparece en ${affectedDesigns.length} diseños guardados que serán actualizados.`,
+                type: 'info'
+            });
+        }
+
         // Get musician before removing it
         const musicianToDelete = musicians.find(m => m.id === musicianId);
         if (musicianToDelete) {
@@ -450,6 +487,22 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             const endItem = items.find(i => i.id === line.endItemId);
             return !(startItem?.musician.id === musicianId || endItem?.musician.id === musicianId);
         }));
+
+        // Update affected designs
+        affectedDesigns.forEach(design => {
+            const updatedDesign = {
+                ...design,
+                items: design.items.filter(item => item.musician.id !== musicianId),
+                lines: design.lines.filter(line => {
+                    const startItem = design.items.find(i => i.id === line.startItemId);
+                    const endItem = design.items.find(i => i.id === line.endItemId);
+                    return !(startItem?.musician.id === musicianId || endItem?.musician.id === musicianId);
+                })
+            };
+            canvasStorage.save(updatedDesign);
+        });
+
+        setDesigns(canvasStorage.getAll());
     };
 
     useEffect(() => {
@@ -509,7 +562,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             } catch (error) {
                 console.error('Error resizing image:', error);
                 // Fallback to original file if resize fails
-                avatarDataUrl = await new Promise((resolve) => {
+                avatarDataUrl = await new Promise<string>((resolve) => {
                     const reader = new FileReader();
                     reader.onload = () => resolve(reader.result as string);
                     reader.readAsDataURL(imageFile);
@@ -517,12 +570,12 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             }
         }
 
-        // Update musician data
-        const updatedMusician = {
+        // Update musician data with proper type casting
+        const updatedMusician: Musician = {
             ...(editDialog.musician || { id: Date.now() }),
             ...musicianData,
-            avatar: avatarDataUrl // Add avatar to musician data
-        };
+            avatar: avatarDataUrl || undefined
+        } as Musician;
 
         // Save avatar to storage if we have one
         if (avatarDataUrl) {
@@ -574,32 +627,142 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         setDialogs(prev => ({ ...prev, instrument: false }));
     };
 
+    useEffect(() => {
+        if (currentDesign) {
+            const currentState = { items, lines, scale };
+            const savedState = {
+                items: currentDesign.items,
+                lines: currentDesign.lines,
+                scale: currentDesign.scale
+            };
+
+            const hasChanges = !areCanvasStatesEqual(currentState, savedState);
+            setHasUnsavedChanges(hasChanges);
+        }
+    }, [items, lines, scale, currentDesign]);
+
+    const handleLoadDesign = (design: CanvasDesign) => {
+        // Check for unsaved changes
+        if (hasUnsavedChanges) {
+            const confirmLoad = window.confirm(
+                'Hay cambios sin guardar. ¿Deseas continuar y perder los cambios?'
+            );
+            if (!confirmLoad) return;
+        }
+
+        // Ensure master is present and valid
+        const hasMaster = design.items.some(item => item.musician.id === MASTER_MUSICIAN.id);
+        const validItems = design.items.filter(item =>
+            item.musician.id === MASTER_MUSICIAN.id ||
+            musicians.some(m => m.id === item.musician.id)
+        );
+
+        // If master is missing, add it
+        if (!hasMaster) {
+            validItems.unshift({
+                ...master,
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2
+            });
+        }
+
+
+        // If some musicians are missing, notify user
+        if (validItems.length !== design.items.length) {
+            showToast({
+                title: 'Advertencia',
+                description: 'Algunos músicos del diseño ya no existen y han sido omitidos.',
+                type: 'info'
+            });
+        }
+
+        // Validate and clean up lines
+        const validLines = design.lines.filter(line =>
+            validItems.some(item => item.id === line.startItemId) &&
+            validItems.some(item => item.id === line.endItemId)
+        );
+
+        setItems(validItems);
+        setLines(validLines);
+        setScale(design.scale);
+
+        // Adjust position based on current window size
+        if (stageRef.current) {
+            const stage = stageRef.current;
+            // Use default window size if not present in design (backwards compatibility)
+            const designWindowWidth = design.windowSize?.width || 1920; // Default width
+            const scaleRatio = window.innerWidth / designWindowWidth;
+            const adjustedPosition = {
+                x: (design.position.x || 0) * scaleRatio,
+                y: (design.position.y || 0) * scaleRatio
+            };
+            stage.position(adjustedPosition);
+        }
+
+        // Add missing properties if loading an old design
+        const normalizedDesign: CanvasDesign = {
+            ...design,
+            items: validItems,
+            lines: validLines,
+            windowSize: design.windowSize || {
+                width: 1920,
+                height: 1080
+            }
+        };
+
+        setCurrentDesign(normalizedDesign);
+        setIsDesignsDialogOpen(false);
+    };
+
     const handleSaveDesign = (name: string) => {
+        // Check for duplicate names
+        const existingDesign = designs.find(d => d.name === name);
+
+        if (existingDesign) {
+            const confirmOverwrite = window.confirm(
+                'Ya existe un diseño con este nombre. ¿Deseas sobrescribirlo?'
+            );
+            if (!confirmOverwrite) {
+                throw new Error('Operación cancelada');
+            }
+            // If overwriting, use the existing design's ID
+            saveDesign(name, existingDesign.id);
+        } else {
+            // If new name, create with new ID
+            saveDesign(name);
+        }
+    };
+
+    const saveDesign = (name: string, existingId?: string) => {
+        // Don't save empty designs
+        if (items.length <= 1) {
+            showToast({
+                title: 'Error',
+                description: 'No se puede guardar un diseño vacío',
+                type: 'error'
+            });
+            throw new Error('Diseño vacío');
+        }
+
         const design: CanvasDesign = {
-            id: currentDesign?.id || '',
+            id: existingId || crypto.randomUUID(), // Use existing ID or generate new one
             name,
             items,
             lines,
             scale,
             position: stageRef.current?.position() || { x: 0, y: 0 },
-            createdAt: currentDesign?.createdAt || Date.now(),
+            windowSize: {
+                width: window.innerWidth,
+                height: window.innerHeight
+            },
+            createdAt: existingId ? (designs.find(d => d.id === existingId)?.createdAt || Date.now()) : Date.now(),
             updatedAt: Date.now()
         };
 
         canvasStorage.save(design);
         setDesigns(canvasStorage.getAll());
         setCurrentDesign(design);
-    };
-
-    const handleLoadDesign = (design: CanvasDesign) => {
-        setItems(design.items);
-        setLines(design.lines);
-        setScale(design.scale);
-        if (stageRef.current) {
-            stageRef.current.position(design.position);
-        }
-        setCurrentDesign(design);
-        setIsDesignsDialogOpen(false);
+        setHasUnsavedChanges(false);
     };
 
     const handleDeleteDesign = (id: string) => {
@@ -609,6 +772,27 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             setCurrentDesign(undefined);
         }
     };
+
+    // Add window resize handler
+    useEffect(() => {
+        const handleResize = () => {
+            if (currentDesign) {
+                // Adjust stage position based on new window size
+                const scaleRatio = window.innerWidth / currentDesign.windowSize.width;
+                if (stageRef.current) {
+                    const stage = stageRef.current;
+                    const newPosition = {
+                        x: currentDesign.position.x * scaleRatio,
+                        y: currentDesign.position.y * scaleRatio
+                    };
+                    stage.position(newPosition);
+                }
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [currentDesign]);
 
     return (
         <div>

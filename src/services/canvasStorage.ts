@@ -13,17 +13,11 @@ export const canvasStorage = {
         const existingIndex = designs.findIndex(d => d.id === design.id);
 
         if (existingIndex >= 0) {
-            designs[existingIndex] = {
-                ...design,
-                updatedAt: Date.now()
-            };
+            // Update existing design
+            designs[existingIndex] = design;
         } else {
-            designs.push({
-                ...design,
-                id: crypto.randomUUID(),
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            });
+            // Add new design
+            designs.push(design);
         }
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(designs));
