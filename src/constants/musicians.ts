@@ -9,3 +9,4 @@ export const MASTER_MUSICIAN: Musician = {
 export const isSpecialMusician = (musicianId: number): boolean => {
     return musicianId === MASTER_MUSICIAN.id;
 };
+    

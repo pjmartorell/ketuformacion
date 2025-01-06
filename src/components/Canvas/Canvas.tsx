@@ -21,6 +21,10 @@ import { CanvasDesignsDialog } from '../Dialog/CanvasDesignsDialog';
 import { useToast } from '../../context/ToastContext';
 import { MASTER_MUSICIAN, isSpecialMusician } from '../../constants/musicians';
 import { areCanvasStatesEqual } from '../../utils/compareUtils';
+import { useHotkeys } from 'react-hotkeys-hook';
+import { autosaveStorage } from '../../services/autosaveStorage';
+import { HistoryManager, HistoryState } from '../../utils/historyManager';
+import { ResetIcon } from '@radix-ui/react-icons';
 
 interface CanvasProps {
     initialMusicians?: Musician[];
@@ -83,6 +87,20 @@ const ZoomButton = styled.button`
   &:active {
     transform: translateY(0);
   }
+`;
+
+const UndoButton = styled(ZoomButton)<{ disabled?: boolean }>`
+    opacity: ${props => props.disabled ? 0.5 : 1};
+    cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+    pointer-events: ${props => props.disabled ? 'none' : 'auto'};
+`;
+
+const RedoButton = styled(UndoButton)``;
+
+// Rename the icons for clarity
+const UndoIcon = ResetIcon;
+const RedoIcon = styled(ResetIcon)`
+    transform: scaleX(-1);
 `;
 
 const LinesToggle = styled.label`
@@ -176,6 +194,13 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     const [isDesignsDialogOpen, setIsDesignsDialogOpen] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const { showToast } = useToast();
+    const historyManager = useRef(new HistoryManager());
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
+
+    // Add this state to track if the change was from undo/redo
+    const isHistoryAction = useRef(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         storageService.initializeIfNeeded();
@@ -385,6 +410,7 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
     };
 
     const handleDragStart = (e: Konva.KonvaEventObject<DragEvent>) => {
+        setIsDragging(true);
         e.target.setAttrs({
             shadowOffset: {
                 x: 15,
@@ -404,6 +430,16 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
             shadowOffsetX: 5,
             shadowOffsetY: 5
         });
+
+        // Set isDragging to false before recording history
+        setIsDragging(false);
+
+        // Record history after drag ends
+        isHistoryAction.current = true; // Prevent the effect from recording this change
+        const currentState: HistoryState = { items, lines, scale };
+        historyManager.current.push(currentState);
+        setCanUndo(historyManager.current.canUndo());
+        setCanRedo(historyManager.current.canRedo());
     };
 
     const handleAddMusiciansToCanvas = (selectedMusicians: Musician[]) => {
@@ -712,10 +748,18 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
 
         setCurrentDesign(normalizedDesign);
         setIsDesignsDialogOpen(false);
+        historyManager.current.clear();
+        const currentState: HistoryState = {
+            items: validItems,
+            lines: validLines,
+            scale: design.scale
+        };
+        historyManager.current.push(currentState);
+        setCanUndo(false);
+        setCanRedo(false);
     };
 
     const handleSaveDesign = (name: string) => {
-        // Check for duplicate names
         const existingDesign = designs.find(d => d.name === name);
 
         if (existingDesign) {
@@ -794,6 +838,92 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, [currentDesign]);
 
+    // Check for autosave on mount
+    useEffect(() => {
+        const autosaved = autosaveStorage.load();
+        if (autosaved) {
+            const minutesAgo = (Date.now() - autosaved.timestamp) / (1000 * 60);
+            if (minutesAgo < 30) { // Only restore if less than 30 minutes old
+                const restore = window.confirm(
+                    `Se encontró una sesión guardada automáticamente de hace ${Math.round(minutesAgo)} minutos. ¿Deseas restaurarla?`
+                );
+                if (restore) {
+                    const { items, lines, scale } = autosaved.design;
+                    setItems(items || [master]);
+                    setLines(lines || []);
+                    setScale(scale || 1);
+                }
+            }
+            autosaveStorage.clear();
+        }
+    }, []);
+
+    // Autosave every 30 seconds if there are changes
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (hasUnsavedChanges) {
+                autosaveStorage.save({ items, lines, scale });
+            }
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, [items, lines, scale, hasUnsavedChanges]);
+
+    // Modify the history effect to ignore changes when isDragging is being set to false
+    useEffect(() => {
+        if (!isHistoryAction.current && !isDragging) {
+            // Only record if it's not from a drag operation completion
+            const currentState: HistoryState = { items, lines, scale };
+            historyManager.current.push(currentState);
+            setCanUndo(historyManager.current.canUndo());
+            setCanRedo(historyManager.current.canRedo());
+        }
+        isHistoryAction.current = false;
+    }, [items, lines, scale]);
+
+    const handleUndo = () => {
+        const previousState = historyManager.current.undo();
+        if (previousState) {
+            isHistoryAction.current = true; // Prevent this change from being recorded
+            setItems(previousState.items);
+            setLines(previousState.lines);
+            setScale(previousState.scale);
+            setCanUndo(historyManager.current.canUndo());
+            setCanRedo(historyManager.current.canRedo());
+        }
+    };
+
+    const handleRedo = () => {
+        const nextState = historyManager.current.redo();
+        if (nextState) {
+            isHistoryAction.current = true; // Prevent this change from being recorded
+            setItems(nextState.items);
+            setLines(nextState.lines);
+            setScale(nextState.scale);
+            setCanUndo(historyManager.current.canUndo());
+            setCanRedo(historyManager.current.canRedo());
+        }
+    };
+
+    // Initialize history with initial state
+    useEffect(() => {
+        const initialState: HistoryState = { items, lines, scale };
+        historyManager.current.push(initialState);
+        setCanUndo(false);
+        setCanRedo(false);
+    }, []); // Run only once on mount
+
+    // Add keyboard shortcuts
+    useHotkeys('ctrl+z, cmd+z', (e) => {
+        e.preventDefault();
+        handleUndo();
+    }, [handleUndo]);
+
+    useHotkeys('ctrl+shift+z, cmd+shift+z', (e) => {
+        e.preventDefault();
+        handleRedo();
+    }, [handleRedo]);
+
     return (
         <div>
             <Toolbar>
@@ -812,6 +942,15 @@ export const Canvas: React.FC<CanvasProps> = ({ initialMusicians = [] }) => {
                     <ZoomButton onClick={() => handleZoom(Math.max(scale * 0.9, 0.3))} title="Zoom out">
                         <FaSearchMinus size={16} />
                     </ZoomButton>
+                </ToolbarGroup>
+
+                <ToolbarGroup>
+                    <UndoButton disabled={!canUndo} onClick={handleUndo} title="Deshacer (Ctrl+Z)">
+                        <UndoIcon />
+                    </UndoButton>
+                    <RedoButton disabled={!canRedo} onClick={handleRedo} title="Rehacer (Ctrl+Shift+Z)">
+                        <RedoIcon />
+                    </RedoButton>
                 </ToolbarGroup>
 
                 <ToolbarGroup>
